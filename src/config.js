@@ -20,9 +20,6 @@ export const REGIONS = {
   tree: { x: 14, y: 20, w: 42, h: 46 },
   pine: { x: 48, y: 20, w: 36, h: 52 },
   rock: { x: 222, y: 18, w: 32, h: 34 },
-  // Mini shop/house fronts from the house tileset (a column of four 16x16 buildings).
-  shopRedA: { x: 255, y: 112, w: 17, h: 16 }, // awning + cross window
-  shopRedB: { x: 255, y: 128, w: 17, h: 16 }, // pointed roof + cross window
 };
 
 // Character sheets: 48x48 frames, one row per facing direction.
