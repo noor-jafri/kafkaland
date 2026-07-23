@@ -10,6 +10,7 @@ export class HUD {
     this.questEl = document.getElementById('quest');
     this.questMissionEl = this.questEl.querySelector('.q-mission');
     this.questObjEl = this.questEl.querySelector('.q-obj');
+    this.questTimerFillEl = this.questEl.querySelector('.q-timer-fill');
     this.checklistEl = document.getElementById('checklist');
     this.dayEl = document.getElementById('day');
     this.frustFillEl = document.getElementById('frust-fill');
@@ -64,11 +65,26 @@ export class HUD {
 
   setObjective(text) {
     this.questObjEl.textContent = text;
+    this.#showQuest();
   }
 
   // The static "what this level is about" line above the live objective.
   setMission(tag, aim) {
     this.questMissionEl.textContent = `${tag} · ${aim}`;
+    this.#showQuest();
+  }
+
+  // Show the quest banner with a countdown bar, then fade it out.
+  #showQuest(ms = 8000) {
+    clearTimeout(this._questTimer);
+    this.questEl.classList.remove('q-hide');
+    const fill = this.questTimerFillEl;
+    fill.style.transition = 'none';
+    fill.style.width = '100%';
+    void fill.offsetWidth; // reflow so the countdown restarts from full
+    fill.style.transition = `width ${ms}ms linear`;
+    fill.style.width = '0%';
+    this._questTimer = setTimeout(() => this.questEl.classList.add('q-hide'), ms);
   }
 
   // Right-side progress panel. items: [{ id, name, optional? }]; held via hasItem.

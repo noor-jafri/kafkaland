@@ -28,7 +28,14 @@
         background: var(--panel); border: 2px solid var(--parch);
         border-radius: 8px; padding: 10px 22px;
         max-width: 62%; text-align: center;
+        transition: opacity 0.6s;
       }
+      #quest.q-hide { opacity: 0; }
+      #quest .q-timer {
+        height: 3px; background: rgba(232, 213, 160, 0.25);
+        border-radius: 2px; margin-top: 8px; overflow: hidden;
+      }
+      #quest .q-timer-fill { height: 100%; width: 100%; background: var(--parch); }
       #quest .q-mission {
         font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
         color: var(--parch); opacity: 0.95; margin-bottom: 4px;
@@ -204,7 +211,7 @@
   <body>
     <div id="app">
       <div id="hud">
-        <div id="quest"><div class="q-mission"></div><div class="q-obj">Kafkaland</div></div>
+        <div id="quest"><div class="q-mission"></div><div class="q-obj">Kafkaland</div><div class="q-timer"><div class="q-timer-fill"></div></div></div>
         <div id="day"></div>
         <div id="checklist" class="hidden"></div>
         <div id="frust"><div class="lbl">FRUSTRATION</div><div class="track"><div id="frust-fill"></div></div></div>
