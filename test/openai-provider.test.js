@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createProvider, DeterministicProvider, OpenAIProvider } from '../server/provider.js';
+import { createCompanionServer } from '../server/app.js';
+import {
+  createProvider,
+  DEFAULT_OPENAI_MODEL,
+  DeterministicProvider,
+  OpenAIProvider,
+  UnconfiguredProvider,
+} from '../server/provider.js';
 
 function openAiResponse(content) {
   return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(content) } }] }), {
@@ -65,16 +72,77 @@ test('OpenAI classifier receives level descriptions but no locked excerpts', asy
   }
 });
 
-test('production startup validates OpenAI credentials and forbids the test provider', () => {
+test('API key alone selects OpenAI with the safe default model', () => {
+  const provider = createProvider({ OPENAI_API_KEY: 'not-a-real-key' });
+  assert.ok(provider instanceof OpenAIProvider);
+  assert.equal(provider.model, DEFAULT_OPENAI_MODEL);
+  assert.equal(provider.endpoint, 'https://api.openai.com/v1/chat/completions');
+  assert.equal(provider.timeoutMs, 12_000);
+});
+
+test('OpenAI model and provider configuration remain explicit overrides', () => {
+  const provider = createProvider({
+    COMPANION_PROVIDER: 'openai',
+    OPENAI_API_KEY: 'not-a-real-key',
+    OPENAI_MODEL: 'operator-selected-model',
+  });
+  assert.ok(provider instanceof OpenAIProvider);
+  assert.equal(provider.model, 'operator-selected-model');
   assert.throws(
-    () => createProvider({ NODE_ENV: 'production', OPENAI_MODEL: 'configured-model' }),
+    () => createProvider({ OPENAI_API_KEY: 'not-a-real-key', COMPANION_PROVIDER: 'unknown' }),
+    /Unsupported COMPANION_PROVIDER/,
+  );
+});
+
+test('missing local key stays unconfigured without weakening production startup', () => {
+  assert.ok(createProvider({}) instanceof UnconfiguredProvider);
+  assert.throws(
+    () => createProvider({ NODE_ENV: 'production' }),
     /OPENAI_API_KEY must be set on the server/,
   );
+});
+
+test('deterministic mode requires an explicit local test opt-in and is forbidden in production', () => {
   assert.throws(
-    () => createProvider({ NODE_ENV: 'production', COMPANION_PROVIDER: 'deterministic', COMPANION_ALLOW_TEST_PROVIDER: 'true' }),
+    () => createProvider({ COMPANION_PROVIDER: 'deterministic' }),
     /restricted to local testing/,
   );
-  assert.ok(createProvider({ NODE_ENV: 'test', COMPANION_PROVIDER: 'deterministic', COMPANION_ALLOW_TEST_PROVIDER: 'true' }) instanceof DeterministicProvider);
+  assert.ok(createProvider({
+    NODE_ENV: 'test',
+    COMPANION_PROVIDER: 'deterministic',
+    COMPANION_ALLOW_TEST_PROVIDER: 'true',
+  }) instanceof DeterministicProvider);
+  assert.throws(
+    () => createProvider({
+      NODE_ENV: 'production',
+      COMPANION_PROVIDER: 'deterministic',
+      COMPANION_ALLOW_TEST_PROVIDER: 'true',
+    }),
+    /restricted to local testing/,
+  );
+});
+
+test('production still requires session secret, allowed origins, and HTTPS provider endpoints', async () => {
+  await assert.rejects(
+    createCompanionServer({ env: { NODE_ENV: 'production', OPENAI_API_KEY: 'not-a-real-key' } }),
+    /COMPANION_SESSION_SECRET is required in production/,
+  );
+  await assert.rejects(
+    createCompanionServer({ env: {
+      NODE_ENV: 'production',
+      COMPANION_SESSION_SECRET: 'production-secret-at-least-32-characters',
+      OPENAI_API_KEY: 'not-a-real-key',
+    } }),
+    /COMPANION_ALLOWED_ORIGINS is required in production/,
+  );
+  assert.throws(
+    () => createProvider({
+      NODE_ENV: 'production',
+      OPENAI_API_KEY: 'not-a-real-key',
+      OPENAI_BASE_URL: 'http://openai.example.test/v1',
+    }),
+    /must use HTTPS/,
+  );
 });
 
 test('browser code contains no OpenAI credentials or server configuration', async () => {

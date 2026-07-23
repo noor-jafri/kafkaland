@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { answerCompanion } from './answer-service.js';
-import { createProvider, ProviderError } from './provider.js';
+import { createProvider, ProviderError, UnconfiguredProvider } from './provider.js';
 import {
   applyProgressAction,
   createInitialProgress,
@@ -161,6 +161,9 @@ export async function createCompanionServer({
   const allowedOrigins = allowedOriginsFrom(env);
   const wikiCorpus = corpus || await loadWikiCorpus();
   const modelProvider = provider || createProvider(env);
+  if (modelProvider instanceof UnconfiguredProvider) {
+    logger.warn?.('OpenAI companion is disabled until OPENAI_API_KEY is set on the server.');
+  }
   const limiter = new FixedWindowLimiter({
     limit: Number(env.COMPANION_RATE_LIMIT) || 8,
     windowMs: Number(env.COMPANION_RATE_WINDOW_MS) || 60_000,

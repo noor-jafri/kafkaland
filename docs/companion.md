@@ -4,20 +4,15 @@ Marlene is an in-world NPC backed by a separate Node server. Production answers 
 
 ## Configuration
 
-Requires Node.js 20.12 or newer. Copy `.env.example` as a reference, then export the values in the server environment. This project does not auto-load env files.
+Requires Node.js 20.12 or newer. For local development, the captain only needs to supply the server-side API key:
 
 ```sh
-export COMPANION_SESSION_SECRET="$(openssl rand -hex 32)"
-export COMPANION_ALLOWED_ORIGINS="http://127.0.0.1:5173,http://localhost:5173"
-export COMPANION_PROVIDER="openai"
-export OPENAI_API_KEY="your server-only OpenAI key"
-export OPENAI_MODEL="a current structured-output-capable model"
-export OPENAI_BASE_URL="https://api.openai.com/v1"
-export OPENAI_TIMEOUT_MS="12000"
-npm run dev:all
+OPENAI_API_KEY="your server-only OpenAI key" npm run dev:all
 ```
 
-`OPENAI_MODEL` is intentionally required rather than hard-coded. Production startup fails with an actionable error if the session secret, allowed origins, API key, model, HTTPS base URL, or timeout is invalid. `npm run dev:api` starts only the API. `npm run dev:all` starts the API and Vite proxy together.
+With no explicit provider override, an API key selects OpenAI. The server defaults to the structured-output-compatible `gpt-4.1-mini` model, `https://api.openai.com/v1`, and a 12-second timeout. Operators may override these with `OPENAI_MODEL`, `OPENAI_BASE_URL`, and `OPENAI_TIMEOUT_MS`. `.env.example` is a reference only; this project does not auto-load env files.
+
+Local startup generates an ephemeral session secret and permits only the local Vite origins. Production does not use those conveniences: startup requires an explicit `COMPANION_SESSION_SECRET`, exact `COMPANION_ALLOWED_ORIGINS`, and `OPENAI_API_KEY`, and continues to reject non-HTTPS OpenAI endpoints, invalid timeout settings, and the deterministic provider. Request size, origin, rate, and in-flight controls remain enabled. `npm run dev:api` starts only the API. `npm run dev:all` starts the API and Vite proxy together.
 
 For local browser checks without a paid request:
 
