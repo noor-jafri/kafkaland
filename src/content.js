@@ -15,6 +15,7 @@ export const HOWTO = {
     ['Interact', 'E — talk, enter doors, pick up documents'],
     ['Vent (punch a tree)', 'F — when standing near any tree'],
     ['Codex (your notes)', 'C — every Fact Card you\'ve seen'],
+    ['Ask Marlene', 'Find her records kiosk, then press E nearby'],
     ['Advance / dismiss', 'E or Space'],
   ],
   creatures: [

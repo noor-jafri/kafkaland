@@ -2,7 +2,13 @@
 const keys = new Set();
 const pressedThisFrame = new Set();
 
+function belongsToInteractiveUi(event) {
+  return event.target instanceof Element && Boolean(event.target.closest('input, textarea, button, select, [role="dialog"]'));
+}
+
 window.addEventListener('keydown', (e) => {
+  // Typing in the companion must never steer the player or lose spaces/arrows.
+  if (belongsToInteractiveUi(e)) return;
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
   if (!keys.has(e.code)) pressedThisFrame.add(e.code);
   keys.add(e.code);
