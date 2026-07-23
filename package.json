@@ -5,9 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "node server/index.js",
+    "dev:all": "node scripts/dev-all.mjs",
+    "start:api": "node server/index.js",
+    "wiki:check": "node scripts/validate-wiki.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.12"
   },
   "dependencies": {
     "three": "^0.178.0"

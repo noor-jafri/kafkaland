@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
-import { MAP, DOCUMENTS, BUILDINGS } from './map.js';
+import { MAP, DOCUMENTS, BUILDINGS, COMPANIONS } from './map.js';
 import { spriteMesh } from './textures.js';
 import { createHouseMesh, houseCenterXForEntrance } from './house.js';
 
@@ -86,6 +86,12 @@ export function buildWorld(scene, textures) {
           blocked.add(`${c + offset},${r}`);
         }
         npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
+      } else if (COMPANIONS[ch]) {
+        const mesh = makeCompanionMesh();
+        mesh.position.set(worldX, tileBottom + 15, depthForY(tileBottom));
+        scene.add(mesh);
+        blocked.add(`${c},${r}`);
+        npcs.push({ ...COMPANIONS[ch], x: worldX, y: worldY, mesh });
       } else if (ch === 's') {
         slimeSpawns.push({ x: worldX, y: worldY });
       } else if (DOCUMENTS[ch]) {
@@ -123,6 +129,59 @@ function makeDocumentMesh() {
     new THREE.PlaneGeometry(16, 16),
     new THREE.MeshBasicMaterial({ map: tex, transparent: true })
   );
+  return mesh;
+}
+
+// Marlene's tiny records kiosk is drawn from hard-edged pixels so the companion
+// belongs to the same world as the bundled sprites without adding a new asset.
+function makeCompanionMesh() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 24;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  // Desk and brass trim.
+  ctx.fillStyle = '#2c473b';
+  ctx.fillRect(2, 18, 20, 12);
+  ctx.fillStyle = '#d7ad4f';
+  ctx.fillRect(2, 18, 20, 2);
+  ctx.fillRect(4, 28, 3, 3);
+  ctx.fillRect(17, 28, 3, 3);
+
+  // Owl silhouette.
+  ctx.fillStyle = '#493126';
+  ctx.fillRect(7, 5, 10, 14);
+  ctx.fillRect(5, 8, 14, 8);
+  ctx.fillStyle = '#a76540';
+  ctx.fillRect(7, 7, 10, 10);
+  ctx.fillStyle = '#f3e4b3';
+  ctx.fillRect(7, 9, 4, 4);
+  ctx.fillRect(13, 9, 4, 4);
+  ctx.fillStyle = '#25231f';
+  ctx.fillRect(9, 10, 2, 2);
+  ctx.fillRect(13, 10, 2, 2);
+  ctx.fillStyle = '#e1a83f';
+  ctx.fillRect(11, 13, 3, 2);
+  ctx.fillRect(12, 15, 1, 2);
+
+  // Question placard.
+  ctx.fillStyle = '#f1e5bd';
+  ctx.fillRect(16, 1, 7, 8);
+  ctx.fillStyle = '#9f3e35';
+  ctx.fillRect(18, 2, 3, 1);
+  ctx.fillRect(20, 3, 1, 2);
+  ctx.fillRect(19, 5, 1, 2);
+  ctx.fillRect(19, 8, 1, 1);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 32),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+  );
+  mesh.userData.companionNpc = true;
   return mesh;
 }
 

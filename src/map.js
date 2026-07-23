@@ -10,6 +10,7 @@
 //   H  Craftpix hostel     (NPC: flavor / respawn)
 //   M  Craftpix apartment  (NPC: grants Mietvertrag + Wohnungsgeberbestätigung)
 //   G  Craftpix Bürgeramt  (NPC: delivery point / level goal)
+//   K  Marlene's records kiosk (discoverable companion NPC)
 //   s  Slime spawn         (hazard: bureaucratic friction)
 //
 // Buildings use the shared Craftpix house, align their doors to their map cells,
@@ -22,7 +23,7 @@ export const MAP = [
   'T...H........P.....................R...T',
   'T..1.......................T...........T',
   'T.@.......#############################T',
-  'T..2......#............................T',
+  'T..2..K...#............................T',
   'T.........#................M...........T',
   'T.........#................#...........T',
   'T....T....#....s...........#.......G...T',
@@ -47,6 +48,10 @@ export const BUILDINGS = {
   H: { id: 'hostel', dialogue: 'hostel' },
   M: { id: 'apartment', dialogue: 'apartment' },
   G: { id: 'buergeramt', goal: true },
+};
+
+export const COMPANIONS = {
+  K: { id: 'companion', name: 'Marlene, Amts-Eule' },
 };
 
 export const BACKPACK_SLOTS = 5;

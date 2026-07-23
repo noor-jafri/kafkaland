@@ -5,6 +5,7 @@ import { buildWorld } from './world.js';
 import { Player } from './player.js';
 import { HUD } from './ui.js';
 import { Screens } from './screens.js';
+import { CompanionPanel } from './companion.js';
 import { buildSlimes } from './enemies.js';
 import { Nag } from './nag.js';
 import { wasPressed, endFrame } from './input.js';
@@ -24,6 +25,8 @@ async function start() {
   const renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.domElement.tabIndex = 0;
+  renderer.domElement.setAttribute('aria-label', 'Kafkaland game world. Use WASD or arrow keys to move.');
   app.prepend(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -48,6 +51,7 @@ async function start() {
   const world = buildWorld(scene, textures);
   const player = new Player(scene, textures, world.playerStart);
   const hud = new HUD();
+  const companion = new CompanionPanel();
   const slimes = buildSlimes(scene, textures, world.slimeSpawns);
   const nag = new Nag(scene);
 
@@ -59,13 +63,14 @@ async function start() {
       hud.setDay(1, DAY_TIMER.deadlineDay);
       hud.setFrustration(0, FRUSTRATION.max);
       hud.toast('🚆 You step off the train in Nuremberg. → Move with WASD.');
+      companion.prepare();
     },
   });
 
   nag.onSpawn = () => hud.toast('📮 ' + NAG_LINES.spawn);
   nag.onLeave = (m) => hud.toast('📮 ' + m);
 
-  window.__game = { player, camera, world, screens }; // debug handle
+  window.__game = { player, camera, world, screens, companion }; // debug handle
 
   camera.position.x = player.pos.x;
   camera.position.y = player.pos.y;
@@ -108,7 +113,9 @@ async function start() {
   }
 
   function interactNpc(npc) {
-    if (npc.id === 'hostel') {
+    if (npc.id === 'companion') {
+      companion.open();
+    } else if (npc.id === 'hostel') {
       screens.startDialogue(DIALOGUES.hostel.speaker, DIALOGUES.hostel.lines);
     } else if (npc.id === 'apartment') {
       if (flatClaimed) {
@@ -119,6 +126,7 @@ async function start() {
       screens.startDialogue(d.speaker, d.lines, () => {
         flatClaimed = true;
         grantItems(d.grants);
+        companion.recordProgress('complete_housing');
       });
     } else if (npc.goal) {
       const hasAll = REQUIRED_FOR_ANMELDUNG.every((id) => hud.hasItem(id));
@@ -127,6 +135,7 @@ async function start() {
         screens.startDialogue(d.speaker, d.lines, () => {
           grantItems(d.grants); // queues the Meldebescheinigung fact card
           registered = true;
+          companion.recordProgress('complete_level_1');
           pendingWin = true; // win screen shows once that card is dismissed
           hud.setObjective('✅ Registered! You are official in Nuremberg.');
         });
@@ -172,8 +181,8 @@ async function start() {
 
     // Screens own input while any overlay/menu is up. Capture that BEFORE updating
     // them, so the frame an overlay closes doesn't also trigger a world action.
-    const wasBlocking = screens.blocking();
-    screens.update();
+    const wasBlocking = screens.blocking() || companion.isOpen();
+    if (!companion.isOpen()) screens.update();
 
     // Show the win screen once the final Meldebescheinigung fact card is dismissed.
     if (pendingWin && !screens.blocking()) {
@@ -263,11 +272,12 @@ async function start() {
         prompt = '<b>E</b> — Pay the Rundfunkbeitrag (make him leave)';
       } else {
         const target = nearestTarget();
-        if (target?.kind === 'doc') prompt = `<b>E</b> — Pick up ${target.item.name}`;
+        if (target?.kind === 'doc') prompt = `<b>E</b> - Pick up ${target.item.name}`;
         else if (target?.kind === 'npc') {
-          if (target.npc.id === 'hostel') prompt = '<b>E</b> — Talk to the hostel clerk';
-          else if (target.npc.id === 'apartment') prompt = flatClaimed ? null : '<b>E</b> — Ask about the flat';
-          else if (target.npc.goal) prompt = '<b>E</b> — Enter the Bürgeramt';
+          if (target.npc.id === 'companion') prompt = '<b>E</b> - Ask Marlene, the Amts-Eule';
+          else if (target.npc.id === 'hostel') prompt = '<b>E</b> - Talk to the hostel clerk';
+          else if (target.npc.id === 'apartment') prompt = flatClaimed ? null : '<b>E</b> - Ask about the flat';
+          else if (target.npc.goal) prompt = '<b>E</b> - Enter the Bürgeramt';
         }
       }
       if (!prompt && tree) prompt = '<b>F</b> — punch the tree (vent)';
