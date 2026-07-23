@@ -1,3 +1,4 @@
+export const DEFAULT_OPENAI_MODEL = 'gpt-4.1-mini';
 const DEFAULT_TIMEOUT_MS = 12_000;
 const MAX_PROVIDER_RESPONSE_BYTES = 256 * 1024;
 
@@ -171,9 +172,8 @@ function validatedTimeout(value) {
 }
 
 export class OpenAIProvider {
-  constructor({ apiKey, baseUrl = 'https://api.openai.com/v1', model, timeoutMs = DEFAULT_TIMEOUT_MS }) {
+  constructor({ apiKey, baseUrl = 'https://api.openai.com/v1', model = DEFAULT_OPENAI_MODEL, timeoutMs = DEFAULT_TIMEOUT_MS }) {
     if (!apiKey) throw new ProviderError('OPENAI_API_KEY is required for the OpenAI companion provider', 'PROVIDER_NOT_CONFIGURED');
-    if (!model) throw new ProviderError('OPENAI_MODEL is required; choose a deployed model that supports structured outputs', 'PROVIDER_NOT_CONFIGURED');
     let parsed;
     try {
       parsed = new URL(baseUrl);
@@ -359,7 +359,7 @@ export class DeterministicProvider {
 
 export class UnconfiguredProvider {
   async answer() {
-    throw new ProviderError('OpenAI is not configured. Set OPENAI_API_KEY and OPENAI_MODEL on the server.', 'PROVIDER_NOT_CONFIGURED');
+    throw new ProviderError('OpenAI is not configured. Set OPENAI_API_KEY on the server.', 'PROVIDER_NOT_CONFIGURED');
   }
 
   async classify() {
@@ -384,16 +384,14 @@ export function createProvider(env = process.env) {
   }
 
   const hasKey = Boolean(env.OPENAI_API_KEY);
-  const hasModel = Boolean(env.OPENAI_MODEL);
-  if (!hasKey && !hasModel && env.NODE_ENV !== 'production') return new UnconfiguredProvider();
-  if (!hasKey || !hasModel) {
-    const missing = [!hasKey && 'OPENAI_API_KEY', !hasModel && 'OPENAI_MODEL'].filter(Boolean).join(' and ');
-    throw new ProviderError(`${missing} must be set on the server for the OpenAI companion provider`, 'PROVIDER_NOT_CONFIGURED');
+  if (!hasKey && env.NODE_ENV !== 'production') return new UnconfiguredProvider();
+  if (!hasKey) {
+    throw new ProviderError('OPENAI_API_KEY must be set on the server for the OpenAI companion provider', 'PROVIDER_NOT_CONFIGURED');
   }
   return new OpenAIProvider({
     apiKey: env.OPENAI_API_KEY,
     baseUrl: env.OPENAI_BASE_URL,
-    model: env.OPENAI_MODEL,
+    model: env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
     timeoutMs: validatedTimeout(env.OPENAI_TIMEOUT_MS),
   });
 }
