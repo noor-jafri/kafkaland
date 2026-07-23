@@ -3,6 +3,7 @@ import { TILE, REGIONS } from './config.js';
 import { MAP, DOCUMENTS, BUILDINGS, COMPANIONS } from './map.js';
 import { spriteMesh } from './textures.js';
 import { createHouseMesh, houseCenterXForEntrance } from './house.js';
+import { createTreeMesh, TREE_ART, treeMeshPosition, treeVariantIndexFor, treeVisualBounds } from './tree.js';
 
 // Painter's sort for the top-down view: things lower on screen render on top.
 export function depthForY(y) {
@@ -21,6 +22,7 @@ export function buildWorld(scene, textures) {
   const npcs = []; // interactable buildings
   const trees = []; // punchable-tree world positions (for the Vent Mechanic)
   const slimeSpawns = []; // world positions where slimes patrol
+  const visualBounds = { minX: 0, maxX: width, minY: 0, maxY: height };
   let playerStart = new THREE.Vector2(width / 2, height / 2);
 
   // --- Ground: one canvas with grass everywhere + dirt on path tiles ---
@@ -51,8 +53,6 @@ export function buildWorld(scene, textures) {
 
   // --- Scenery objects ---
   const sceneryDefs = {
-    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1, punchable: true },
-    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1, punchable: true },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
   };
 
@@ -65,6 +65,22 @@ export function buildWorld(scene, textures) {
 
       if (ch === '@') {
         playerStart = new THREE.Vector2(worldX, worldY);
+      } else if (ch === 'T' || ch === 'P') {
+        const art = TREE_ART[treeVariantIndexFor({ column: c, row: r, symbol: ch })];
+        const groundY = tileBottom - 2;
+        const position = treeMeshPosition(art, worldX, groundY);
+        const bounds = treeVisualBounds(art, worldX, groundY);
+        const mesh = createTreeMesh(textures, art);
+        mesh.position.set(position.x, position.y, depthForY(groundY));
+        scene.add(mesh);
+        // Collision stays on one map tile around the trunk, never the canopy.
+        blocked.add(`${c},${r}`);
+        trees.push({ x: worldX, y: worldY, mesh, restX: position.x, variant: art.id });
+        const canopyMargin = 4;
+        visualBounds.minX = Math.min(visualBounds.minX, bounds.minX - canopyMargin);
+        visualBounds.maxX = Math.max(visualBounds.maxX, bounds.maxX + canopyMargin);
+        visualBounds.minY = Math.min(visualBounds.minY, bounds.minY - canopyMargin);
+        visualBounds.maxY = Math.max(visualBounds.maxY, bounds.maxY + canopyMargin);
       } else if (sceneryDefs[ch]) {
         const def = sceneryDefs[ch];
         const mesh = spriteMesh(textures[def.tex], def.region, { scale: def.scale });
@@ -72,7 +88,6 @@ export function buildWorld(scene, textures) {
         mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         scene.add(mesh);
         blocked.add(`${c},${r}`);
-        if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
       } else if (BUILDINGS[ch]) {
         const mesh = createHouseMesh(textures);
         const h = mesh.geometry.parameters.height;
@@ -104,7 +119,7 @@ export function buildWorld(scene, textures) {
     }
   }
 
-  return { width, height, rows, cols, blocked, items, npcs, trees, slimeSpawns, playerStart };
+  return { width, height, rows, cols, blocked, items, npcs, trees, slimeSpawns, playerStart, visualBounds };
 }
 
 // A little paper document, drawn on a canvas (no asset needed).

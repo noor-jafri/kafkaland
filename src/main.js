@@ -12,6 +12,11 @@ import { wasPressed, endFrame } from './input.js';
 import { DIALOGUES, NAG_LINES, VENT_LINES } from './content.js';
 import { REQUIRED_FOR_ANMELDUNG } from './map.js';
 
+function cameraCenterFor(value, viewSize, minimum, maximum) {
+  if (maximum - minimum <= viewSize) return (minimum + maximum) / 2;
+  return Math.max(minimum + viewSize / 2, Math.min(maximum - viewSize / 2, value));
+}
+
 // Items handed over by NPCs (not found on the map).
 const GRANTED = {
   mietvertrag: { id: 'mietvertrag', name: 'Mietvertrag', icon: '📑', fact: 'mietvertrag' },
@@ -193,11 +198,11 @@ async function start() {
     const frozen = wasBlocking || !started;
     player.update(dt, world, frozen);
 
-    // Camera follows the player, clamped to map edges.
+    // Camera follows the player while keeping edge canopies inside the view.
     const viewW = camera.right - camera.left;
     const viewH = camera.top - camera.bottom;
-    const cx = Math.max(viewW / 2, Math.min(world.width - viewW / 2, player.pos.x));
-    const cy = Math.max(viewH / 2, Math.min(world.height - viewH / 2, player.pos.y));
+    const cx = cameraCenterFor(player.pos.x, viewW, world.visualBounds.minX, world.visualBounds.maxX);
+    const cy = cameraCenterFor(player.pos.y, viewH, world.visualBounds.minY, world.visualBounds.maxY);
     camera.position.x += (cx - camera.position.x) * Math.min(1, dt * 8);
     camera.position.y += (cy - camera.position.y) * Math.min(1, dt * 8);
 
@@ -256,13 +261,14 @@ async function start() {
         frustration = Math.max(0, frustration - FRUSTRATION.ventDrain);
         hud.setFrustration(frustration, FRUSTRATION.max);
         hud.toast(VENT_LINES[Math.floor(Math.random() * VENT_LINES.length)]);
-        tree.mesh.position.x += 1.5; // tiny nudge; eased back below
         tree._shake = 0.25;
       }
       for (const t of world.trees) {
         if (t._shake > 0) {
-          t._shake -= dt;
-          t.mesh.position.x += Math.sin(elapsed * 60) * 0.6;
+          t._shake = Math.max(0, t._shake - dt);
+          t.mesh.position.x = t.restX + Math.sin(elapsed * 60) * 1.2;
+        } else {
+          t.mesh.position.x = t.restX;
         }
       }
 
