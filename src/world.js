@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
 import { spriteMesh } from './textures.js';
 import { createHouseMesh, houseCenterXForEntrance } from './house.js';
+import { createTreeMesh, TREE_ART, treeMeshPosition, treeVariantIndexFor, treeVisualBounds } from './tree.js';
 
 // Painter's sort for the top-down view: things lower on screen render on top.
 export function depthForY(y) {
@@ -14,6 +15,7 @@ export function buildWorld(scene, textures, level) {
   const MAP = level.map;
   const DOCUMENTS = level.documents;
   const BUILDINGS = level.buildings;
+  const COMPANIONS = level.companions || {};
   const rows = MAP.length;
   const cols = MAP[0].length;
   const width = cols * TILE;
@@ -25,6 +27,7 @@ export function buildWorld(scene, textures, level) {
   const trees = []; // punchable-tree world positions (for the Vent Mechanic)
   const enemySpawns = { slime: [], bat: [] }; // world positions, keyed by kind
   const trail = []; // breadcrumb of recent player positions (the Nag follows it)
+  const visualBounds = { minX: 0, maxX: width, minY: 0, maxY: height };
   let playerStart = new THREE.Vector2(width / 2, height / 2);
 
   // Everything a level owns hangs off this group, so a level switch can remove
@@ -60,8 +63,6 @@ export function buildWorld(scene, textures, level) {
 
   // --- Scenery objects ---
   const sceneryDefs = {
-    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1, punchable: true },
-    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1, punchable: true },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
   };
 
@@ -74,6 +75,21 @@ export function buildWorld(scene, textures, level) {
 
       if (ch === '@') {
         playerStart = new THREE.Vector2(worldX, worldY);
+      } else if (ch === 'T' || ch === 'P') {
+        const art = TREE_ART[treeVariantIndexFor({ column: c, row: r, symbol: ch })];
+        const groundY = tileBottom - 2;
+        const position = treeMeshPosition(art, worldX, groundY);
+        const bounds = treeVisualBounds(art, worldX, groundY);
+        const mesh = createTreeMesh(textures, art);
+        mesh.position.set(position.x, position.y, depthForY(groundY));
+        root.add(mesh);
+        blocked.add(`${c},${r}`);
+        trees.push({ x: worldX, y: worldY, mesh, restX: position.x, variant: art.id });
+        const canopyMargin = 4;
+        visualBounds.minX = Math.min(visualBounds.minX, bounds.minX - canopyMargin);
+        visualBounds.maxX = Math.max(visualBounds.maxX, bounds.maxX + canopyMargin);
+        visualBounds.minY = Math.min(visualBounds.minY, bounds.minY - canopyMargin);
+        visualBounds.maxY = Math.max(visualBounds.maxY, bounds.maxY + canopyMargin);
       } else if (sceneryDefs[ch]) {
         const def = sceneryDefs[ch];
         const mesh = spriteMesh(textures[def.tex], def.region, { scale: def.scale });
@@ -81,7 +97,6 @@ export function buildWorld(scene, textures, level) {
         mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         root.add(mesh);
         blocked.add(`${c},${r}`);
-        if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
       } else if (BUILDINGS[ch]) {
         const mesh = createHouseMesh(textures);
         const h = mesh.geometry.parameters.height;
@@ -95,6 +110,12 @@ export function buildWorld(scene, textures, level) {
           blocked.add(`${c + offset},${r}`);
         }
         npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
+      } else if (COMPANIONS[ch]) {
+        const mesh = makeCompanionMesh();
+        mesh.position.set(worldX, tileBottom + 15, depthForY(tileBottom));
+        root.add(mesh);
+        blocked.add(`${c},${r}`);
+        npcs.push({ ...COMPANIONS[ch], x: worldX, y: worldY, mesh });
       } else if (ch === 's') {
         enemySpawns.slime.push({ x: worldX, y: worldY });
       } else if (ch === 'b') {
@@ -109,7 +130,7 @@ export function buildWorld(scene, textures, level) {
     }
   }
 
-  return { width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root };
+  return { map: MAP, width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root, visualBounds };
 }
 
 // A little paper document, drawn on a canvas (no asset needed).
@@ -135,6 +156,62 @@ function makeDocumentMesh() {
     new THREE.MeshBasicMaterial({ map: tex, transparent: true })
   );
   return mesh;
+}
+
+// Marlene's records kiosk is drawn from hard-edged pixels so the companion
+// belongs to the same world as the bundled sprites without adding a new asset.
+function makeCompanionMesh() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 24;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  ctx.fillStyle = '#2c473b';
+  ctx.fillRect(2, 18, 20, 12);
+  ctx.fillStyle = '#d7ad4f';
+  ctx.fillRect(2, 18, 20, 2);
+  ctx.fillRect(4, 28, 3, 3);
+  ctx.fillRect(17, 28, 3, 3);
+
+  ctx.fillStyle = '#493126';
+  ctx.fillRect(7, 5, 10, 14);
+  ctx.fillRect(5, 8, 14, 8);
+  ctx.fillStyle = '#a76540';
+  ctx.fillRect(7, 7, 10, 10);
+  ctx.fillStyle = '#f3e4b3';
+  ctx.fillRect(7, 9, 4, 4);
+  ctx.fillRect(13, 9, 4, 4);
+  ctx.fillStyle = '#25231f';
+  ctx.fillRect(9, 10, 2, 2);
+  ctx.fillRect(13, 10, 2, 2);
+  ctx.fillStyle = '#e1a83f';
+  ctx.fillRect(11, 13, 3, 2);
+  ctx.fillRect(12, 15, 1, 2);
+
+  ctx.fillStyle = '#f1e5bd';
+  ctx.fillRect(16, 1, 7, 8);
+  ctx.fillStyle = '#9f3e35';
+  ctx.fillRect(18, 2, 3, 1);
+  ctx.fillRect(20, 3, 1, 2);
+  ctx.fillRect(19, 5, 1, 2);
+  ctx.fillRect(19, 8, 1, 1);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 32),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+  );
+  mesh.userData.companionNpc = true;
+  return mesh;
+}
+
+export function surfaceAt(world, x, y) {
+  const column = Math.max(0, Math.min(world.cols - 1, Math.floor(x / TILE)));
+  const row = Math.max(0, Math.min(world.rows - 1, Math.floor((world.height - y) / TILE)));
+  return world.map[row]?.[column] === '#' ? 'path' : 'grass';
 }
 
 // AABB collision against blocked tiles. Returns true if the box hits a wall.

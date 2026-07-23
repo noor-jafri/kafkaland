@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/companion.css" />
+    <link rel="stylesheet" href="/src/audio/settings.css" />
     <title>Kafkaland - Welcome to Nuremberg</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -170,6 +172,12 @@
       .won-col { margin: 12px 0; }
       .won-h { color: var(--parch); font-size: 13px; margin-bottom: 6px; }
       .won-col ul { list-style: none; font-size: 15px; line-height: 1.7; }
+      @media (max-width: 620px) {
+        #frust { top: 8px; left: 8px; width: 190px; }
+        #day { top: 8px; right: 8px; }
+        #quest { top: 58px; max-width: calc(100% - 24px); font-size: 12px; padding: 7px 10px; }
+        #toast { top: 114px; max-width: calc(100% - 24px); }
+      }
       .hidden { display: none !important; }
     </style>
   </head>
@@ -201,6 +209,96 @@
         <div class="codex-title">📖 Codex — What You've Learned</div>
         <div id="codex-list"></div>
         <div class="codex-hint">C or Esc to close</div>
+      </div>
+
+      <div id="companion" class="hidden" aria-hidden="true">
+        <div class="companion-shade" aria-hidden="true"></div>
+        <section class="companion-window" role="dialog" aria-modal="true" aria-labelledby="companion-title">
+          <header class="companion-header">
+            <div class="companion-portrait" aria-hidden="true">
+              <div class="owl-face"><span class="owl-beak"></span><span class="companion-eyebrow"></span></div>
+            </div>
+            <div class="companion-title-block">
+              <div class="companion-overline">KAFKALAND · AMTSSTUBE</div>
+              <h2 class="companion-title" id="companion-title">Marlene, Amts-Eule</h2>
+              <p class="companion-subtitle">Plain words. Unlocked files. Proper footnotes.</p>
+              <span class="companion-level" id="companion-level">LEVEL 1 FILES</span>
+            </div>
+            <button class="companion-close" id="companion-close" type="button" aria-label="Close companion and return to game" title="Return to game (Esc)">×</button>
+          </header>
+
+          <div class="companion-tabs" role="tablist" aria-label="Companion mode">
+            <button class="companion-tab" role="tab" type="button" data-mode="ask" aria-selected="true" aria-controls="companion-composer">
+              ASK A QUESTION <span>English · Deutsch</span>
+            </button>
+            <button class="companion-tab" role="tab" type="button" data-mode="letter" aria-selected="false" aria-controls="companion-composer">
+              LETTER HELP <span>Brief verstehen</span>
+            </button>
+          </div>
+
+          <div class="companion-messages" id="companion-messages" role="log" aria-live="polite" aria-relevant="additions">
+            <div class="companion-empty" id="companion-empty">
+              <div class="empty-stamp">AKTE OFFEN</div>
+              <h3>What is puzzling you?</h3>
+              <p>I only open files earned at your current checkpoint. The glossary stays on Marlene's desk at every level.</p>
+              <div class="companion-suggestions" aria-label="Suggested questions">
+                <button type="button" data-suggestion="Which documents should I prepare before arriving?">Which documents should I prepare before arriving?</button>
+                <button type="button" data-suggestion="Was bedeutet Anmeldung?">Was bedeutet „Anmeldung“?</button>
+              </div>
+            </div>
+          </div>
+
+          <form class="companion-form" id="companion-form">
+            <div class="letter-warning hidden" id="letter-warning" role="note">
+              <strong>⚠ NOT LEGAL ADVICE · CURRENT INFORMATION MAY DIFFER</strong>
+              <span>Keine Rechtsberatung. Paste text only. Kafkaland does not save letter text. Your configured model provider processes it under its data policy. Image/PDF reading is not available.</span>
+            </div>
+            <div id="companion-composer">
+              <label for="companion-input">Your question or pasted letter text</label>
+              <textarea class="companion-input" id="companion-input" rows="3" maxlength="1000" autocomplete="off" spellcheck="true"></textarea>
+              <div class="companion-form-footer">
+                <span class="companion-count" id="companion-count">0 / 1,000</span>
+                <span class="companion-mode-hint" id="companion-mode-hint"></span>
+                <button class="companion-submit" id="companion-submit" type="submit"><span class="submit-label">Ask Marlene</span></button>
+              </div>
+              <p class="companion-privacy">No Kafkaland conversation storage · No locked files sent to the model · Sources shown with every grounded answer</p>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <button
+        id="audio-settings-toggle"
+        type="button"
+        aria-controls="audio-settings"
+        aria-expanded="false"
+        title="Audio settings (M)"
+      >Audio</button>
+
+      <div id="audio-settings" class="hidden" aria-hidden="true">
+        <div class="audio-settings-shade" aria-hidden="true"></div>
+        <section class="audio-settings-window" role="dialog" aria-modal="true" aria-labelledby="audio-settings-title">
+          <header class="audio-settings-header">
+            <div>
+              <div class="audio-settings-overline">KAFKALAND · SOUND AMT</div>
+              <h2 id="audio-settings-title">Audio settings</h2>
+            </div>
+            <button id="audio-settings-close" class="audio-settings-close" type="button" aria-label="Close audio settings">×</button>
+          </header>
+          <div class="audio-settings-body">
+            <div class="audio-status-row">
+              <p id="audio-status" role="status">Sound waits for your first click or key press.</p>
+              <button id="audio-enable" type="button">Enable audio</button>
+            </div>
+            <p class="audio-settings-intro">Four separately saved channels. Music makes room for dialogue automatically.</p>
+            <div id="audio-settings-mixer" aria-label="Audio channel volumes"></div>
+            <div class="audio-settings-actions">
+              <button id="audio-master-mute" type="button" aria-pressed="false">Mute all sound</button>
+              <button id="audio-reset" type="button">Reset quiet defaults</button>
+            </div>
+            <p class="audio-settings-hint">Tab moves between controls. Arrow keys adjust sliders. Esc or M closes.</p>
+          </div>
+        </section>
       </div>
 
       <div id="screen">

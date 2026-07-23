@@ -7,6 +7,9 @@ export const ASSETS = {
   grassTileset: '/assets/Tileset/Autotile_Grass_and_Dirt_Path_Tileset.png',
   natureTileset: '/assets/Tileset/Nature_Tileset.png',
   craftpixHouse: '/assets/Craftpix/house.png',
+  craftpixTree1: '/assets/Craftpix/trees/Tree1.png',
+  craftpixTree2: '/assets/Craftpix/trees/Tree2.png',
+  craftpixTree3: '/assets/Craftpix/trees/Tree3.png',
   shadow: '/assets/Sprites/Sprite_Shadow.png',
   bunnyIdle: '/assets/Sprites/Characters/Bunny/IDLE/Bunny_Idle.png',
   bunnyRun: '/assets/Sprites/Characters/Bunny/RUN/Bunny_Run.png',
@@ -19,8 +22,6 @@ export const REGIONS = {
   grass: { x: 186, y: 52, w: 16, h: 16 },
   grassSprout: { x: 184, y: 48, w: 16, h: 16 }, // grass with a tiny sprout, for variety
   dirt: { x: 256, y: 40, w: 16, h: 16 },
-  tree: { x: 14, y: 20, w: 42, h: 46 },
-  pine: { x: 48, y: 20, w: 36, h: 52 },
   rock: { x: 222, y: 18, w: 32, h: 34 },
 };
 

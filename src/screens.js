@@ -50,6 +50,7 @@ export class Screens {
   // win: the current level's { title, sub, body, nextLabel, hasNext } metadata.
   // onContinue: called when the player confirms and hasNext is true.
   showWon(items, win, onContinue) {
+    this.onAudioEvent?.('completion');
     this.phase = 'won';
     this.overlay = null;
     this.onWonContinue = win.hasNext ? onContinue : null;
@@ -99,11 +100,20 @@ export class Screens {
     // Full-screen phases.
     if (this.phase === 'title') this.#updateTitle(up, down, confirm);
     else if (this.phase === 'intro') {
-      if (confirm) this.#advanceIntro();
+      if (confirm) {
+        this.onAudioEvent?.('ui-confirm', { gain: 0.42 });
+        this.#advanceIntro();
+      }
     } else if (this.phase === 'howto') {
-      if (confirm) this.#beginPlaying();
+      if (confirm) {
+        this.onAudioEvent?.('ui-confirm', { gain: 0.48 });
+        this.#beginPlaying();
+      }
     } else if (this.phase === 'credits') {
-      if (confirm || esc) this.#renderTitle();
+      if (confirm || esc) {
+        this.onAudioEvent?.('ui-back', { gain: 0.42 });
+        this.#renderTitle();
+      }
     } else if (this.phase === 'won') {
       if (confirm && this.onWonContinue) {
         const go = this.onWonContinue;

@@ -21,7 +21,7 @@ export const MAP = [
   'T.......T....P..P.....T.P..............T',
   'T.......T.......P.......P..............T',
   'T...............P.......P..............T',
-  'T.@............sP.................T....T',
+  'T.@.K..........sP.................T....T',
   'T...............P...T......s.....R.....T',
   'T...................T.......T..........T',
   'T.TTTTT.....T.......T.......T..........T',
@@ -76,6 +76,10 @@ export const BUILDINGS = {
 // Documents required (delivered at the goal) to clear the level.
 export const REQUIRED = ['passport', 'mietvertrag', 'wohnungsgeberbestaetigung'];
 
+export const COMPANIONS = {
+  K: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
+};
+
 export const LEVEL1 = {
   id: 1,
   name: 'LEVEL 1',
@@ -83,6 +87,7 @@ export const LEVEL1 = {
   documents: DOCUMENTS,
   granted: GRANTED,
   buildings: BUILDINGS,
+  companions: COMPANIONS,
   required: REQUIRED,
   startObjective: '🎯 Anmeldung: first find your Reisepass (it is hidden), then rent a flat, then register at the Bürgeramt.',
   startToast: '🚆 You step off the train in Nuremberg. → Move with WASD.',

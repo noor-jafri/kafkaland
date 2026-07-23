@@ -15,7 +15,7 @@ export const MAP = [
   'T...TTTTTTTTT..PPPPPPPPPP..TTTTTTTTT...T',
   'T......................................T',
   'T.......R....s......K.......P..........T',
-  'T.@..............P.....................T',
+  'T.@.K............P.....................T',
   'T............................b.........T',
   'T...PPPPPPP..TTTTTTTTTT...PPPPPPPPPP...T',
   'T........T....................T........T',
@@ -70,6 +70,10 @@ export const BUILDINGS = {
 // Delivered at the Finanzamt to clear the level.
 export const REQUIRED = ['iban', 'versichertenkarte'];
 
+export const COMPANIONS = {
+  K: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
+};
+
 export const LEVEL2 = {
   id: 2,
   name: 'LEVEL 2',
@@ -77,6 +81,7 @@ export const LEVEL2 = {
   documents: DOCUMENTS,
   granted: GRANTED,
   buildings: BUILDINGS,
+  companions: COMPANIONS,
   required: REQUIRED,
   startObjective: '🎯 Set up your life: open a bank account (needs a Kontoantrag — it is hidden), then get insured, then register for tax.',
   startToast: '📄 Meldebescheinigung in hand, you set out again. → Bank first.',
