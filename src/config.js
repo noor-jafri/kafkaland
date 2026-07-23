@@ -6,7 +6,7 @@ export const TILE = 16;
 export const ASSETS = {
   grassTileset: '/assets/Tileset/Autotile_Grass_and_Dirt_Path_Tileset.png',
   natureTileset: '/assets/Tileset/Nature_Tileset.png',
-  houseTileset: '/assets/Tileset/House_Tileset.png',
+  craftpixHouse: '/assets/Craftpix/house.png',
   shadow: '/assets/Sprites/Sprite_Shadow.png',
   bunnyIdle: '/assets/Sprites/Characters/Bunny/IDLE/Bunny_Idle.png',
   bunnyRun: '/assets/Sprites/Characters/Bunny/RUN/Bunny_Run.png',

@@ -5,8 +5,8 @@
 //   T  big tree      (blocks movement)
 //   P  pine tree     (blocks movement)
 //   R  rock          (blocks movement)
-//   A  workshop cottage (blocks movement)
-//   B  red-door cottage (blocks movement)
+//   A  Craftpix cottage (blocks movement)
+//   B  Craftpix cottage (blocks movement)
 //   1..9  document spawn points (see DOCUMENTS below)
 //   @  player start
 //

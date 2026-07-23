@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
 import { MAP, DOCUMENTS } from './map.js';
 import { spriteMesh } from './textures.js';
-import { createHouseMesh } from './house.js';
+import { createHouseMesh, houseCenterXForEntrance } from './house.js';
 
 // Painter's sort for the top-down view: things lower on screen render on top.
 export function depthForY(y) {
@@ -51,8 +51,8 @@ export function buildWorld(scene, textures) {
     T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1 },
     P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1 },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
-    A: { house: 'workshop', blockRadius: 2 },
-    B: { house: 'cottage', blockRadius: 2 },
+    A: { house: true, blockRadius: 2 },
+    B: { house: true, blockRadius: 2 },
   };
 
   for (let r = 0; r < rows; r++) {
@@ -67,10 +67,11 @@ export function buildWorld(scene, textures) {
       } else if (objectDefs[ch]) {
         const def = objectDefs[ch];
         const mesh = def.house
-          ? createHouseMesh(textures, def.house)
+          ? createHouseMesh(textures)
           : spriteMesh(textures[def.tex], def.region, { scale: def.scale });
         const h = mesh.geometry.parameters.height;
-        mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
+        const meshX = def.house ? houseCenterXForEntrance(worldX) : worldX;
+        mesh.position.set(meshX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         scene.add(mesh);
         const blockRadius = def.blockRadius ?? 0;
         for (let offset = -blockRadius; offset <= blockRadius; offset++) {
