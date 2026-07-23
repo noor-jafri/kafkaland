@@ -53,6 +53,7 @@ async function start() {
   const textures = await loadAll();
   const hud = new HUD();
   const companion = new CompanionPanel({ onAudioEvent: (name, detail) => gameAudio.emit(name, detail) });
+  const hudEl = document.getElementById('hud');
   const nag = new Nag(scene);
   nag.onSpawn = () => {
     gameAudio.emit('mail-delivery');
@@ -280,6 +281,10 @@ async function start() {
     // them, so the frame an overlay closes doesn't also trigger a world action.
     const wasBlocking = screens.blocking() || companion.isOpen() || audioSettings.isOpen();
     if (!companion.isOpen() && !audioSettings.isOpen()) screens.update();
+
+    // Declutter: hide the HUD panels while any overlay (dialogue, fact card,
+    // codex, menus) owns the screen.
+    hudEl.classList.toggle('quiet', screens.blocking());
 
     // Show the win screen once the final fact card is dismissed.
     if (pendingWin && !screens.blocking()) {

@@ -24,7 +24,11 @@
         position: absolute; inset: 0; pointer-events: none;
         font-family: "Courier New", monospace; color: var(--ink);
         user-select: none;
+        transition: opacity 0.25s;
       }
+      /* Fade the whole HUD while a dialogue / fact card / codex is up,
+         so overlays get a clean, readable screen. */
+      #hud.quiet { opacity: 0; }
       #quest {
         position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
         background: var(--panel); border: 2px solid var(--parch);
@@ -82,7 +86,7 @@
       #hint {
         position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
         background: rgba(20, 20, 30, 0.9); border: 1px solid #fff;
-        border-radius: 4px; padding: 6px 14px; font-size: 13px; display: none;
+        border-radius: 4px; padding: 7px 16px; font-size: 15px; display: none;
       }
       #backpack {
         position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
@@ -101,28 +105,28 @@
       #toast {
         position: absolute; top: 66px; left: 50%; transform: translateX(-50%);
         background: rgba(40, 60, 90, 0.94); border: 2px solid #9bc4e8;
-        border-radius: 6px; padding: 7px 16px; font-size: 13px; max-width: 74%;
+        border-radius: 6px; padding: 8px 18px; font-size: 15px; max-width: 74%;
         text-align: center; opacity: 0; transition: opacity 0.3s; color: #fff;
       }
 
       /* ---------- Dialogue ---------- */
       #dialogue {
         position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
-        width: min(680px, 82%); background: var(--panel);
-        border: 3px solid var(--parch); border-radius: 10px; padding: 14px 18px;
+        width: min(720px, 86%); background: var(--panel);
+        border: 3px solid var(--parch); border-radius: 10px; padding: 16px 20px;
         font-family: "Courier New", monospace; color: var(--ink);
       }
       #dialogue .dlg-speaker {
-        color: var(--parch); font-weight: bold; font-size: 13px; margin-bottom: 6px;
+        color: var(--parch); font-weight: bold; font-size: 16px; margin-bottom: 8px;
         text-transform: uppercase; letter-spacing: 1px;
       }
-      #dialogue .dlg-text { font-size: 15px; line-height: 1.5; }
-      #dialogue .dlg-cont { text-align: right; margin-top: 8px; font-size: 12px; opacity: 0.7; }
+      #dialogue .dlg-text { font-size: 19px; line-height: 1.55; }
+      #dialogue .dlg-cont { text-align: right; margin-top: 10px; font-size: 14px; opacity: 0.7; }
 
       /* ---------- Fact card ---------- */
       #factcard {
         position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
-        width: min(620px, 82%); background: #f5f0dc; color: #2a2620;
+        width: min(680px, 86%); background: #f5f0dc; color: #2a2620;
         border: 3px solid #b9a25c; border-radius: 10px; padding: 16px 20px;
         font-family: "Courier New", monospace;
         box-shadow: 0 8px 30px rgba(0,0,0,0.5); transform-origin: bottom center;
@@ -133,12 +137,12 @@
         to { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; }
       }
       #factcard .fc-tag {
-        font-size: 10px; letter-spacing: 1.5px; color: #9a7d2e;
+        font-size: 12px; letter-spacing: 1.5px; color: #9a7d2e;
         text-transform: uppercase; border-bottom: 1px dashed #b9a25c; padding-bottom: 5px;
       }
-      #factcard .fc-title { font-size: 18px; font-weight: bold; margin: 8px 0 6px; color: #6b3f10; }
-      #factcard .fc-body { font-size: 14px; line-height: 1.55; }
-      #factcard .fc-cont { text-align: right; margin-top: 10px; font-size: 12px; color: #9a7d2e; }
+      #factcard .fc-title { font-size: 22px; font-weight: bold; margin: 10px 0 8px; color: #6b3f10; }
+      #factcard .fc-body { font-size: 17px; line-height: 1.55; }
+      #factcard .fc-cont { text-align: right; margin-top: 12px; font-size: 14px; color: #9a7d2e; }
 
       /* ---------- Codex ---------- */
       #codex {

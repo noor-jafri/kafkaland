@@ -75,7 +75,7 @@ export class HUD {
   }
 
   // Show the quest banner with a countdown bar, then fade it out.
-  #showQuest(ms = 8000) {
+  #showQuest(ms = 5000) {
     clearTimeout(this._questTimer);
     this.questEl.classList.remove('q-hide');
     const fill = this.questTimerFillEl;
