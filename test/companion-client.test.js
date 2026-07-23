@@ -19,9 +19,9 @@ test('citations have readable title and heading labels', () => {
 });
 
 test('companion kiosk is a discoverable world NPC rather than a menu shortcut', () => {
-  assert.equal(COMPANIONS.K.id, 'companion');
-  assert.equal(COMPANIONS.K.name, 'Marlene, Amts-Eule');
-  assert.equal(MAP.flatMap((row) => [...row]).filter((cell) => cell === 'K').length, 1);
+  assert.equal(COMPANIONS.Q.id, 'companion');
+  assert.equal(COMPANIONS.Q.name, 'Marlene, Amts-Eule');
+  assert.equal(MAP.flatMap((row) => [...row]).filter((cell) => cell === 'Q').length, 1);
 });
 
 test('companion markup includes dialog semantics, warnings, and honest text-only support', async () => {

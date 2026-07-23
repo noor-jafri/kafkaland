@@ -8,6 +8,9 @@ export class HUD {
     this.hintEl = document.getElementById('hint');
     this.toastEl = document.getElementById('toast');
     this.questEl = document.getElementById('quest');
+    this.questMissionEl = this.questEl.querySelector('.q-mission');
+    this.questObjEl = this.questEl.querySelector('.q-obj');
+    this.checklistEl = document.getElementById('checklist');
     this.dayEl = document.getElementById('day');
     this.frustFillEl = document.getElementById('frust-fill');
     this.frustWrapEl = document.getElementById('frust');
@@ -60,7 +63,33 @@ export class HUD {
   }
 
   setObjective(text) {
-    this.questEl.textContent = text;
+    this.questObjEl.textContent = text;
+  }
+
+  // The static "what this level is about" line above the live objective.
+  setMission(tag, aim) {
+    this.questMissionEl.textContent = `${tag} · ${aim}`;
+  }
+
+  // Right-side progress panel. items: [{ id, name, optional? }]; held via hasItem.
+  setChecklist(items) {
+    if (!items || !items.length) {
+      this.checklistEl.classList.add('hidden');
+      return;
+    }
+    const rows = items
+      .map((it) => {
+        const done = this.hasItem(it.id);
+        const cls = ['cl-row'];
+        if (done) cls.push('done');
+        if (it.optional) cls.push('opt');
+        const box = done ? '✅' : '⬜';
+        const tail = it.optional ? ' (optional)' : '';
+        return `<div class="${cls.join(' ')}">${box} ${it.name}${tail}</div>`;
+      })
+      .join('');
+    this.checklistEl.innerHTML = `<div class="cl-h">Documents</div>${rows}`;
+    this.checklistEl.classList.remove('hidden');
   }
 
   setDay(day, deadline) {

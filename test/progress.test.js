@@ -34,6 +34,7 @@ test('server progression accepts only ordered named actions', () => {
     companionDiscovered: false,
     housingComplete: false,
     levelOneComplete: false,
+    levelTwoComplete: false,
   });
 
   assert.throws(() => applyProgressAction(progress, 'complete_level_1', 2_000), { code: 'INVALID_TRANSITION' });
@@ -44,4 +45,8 @@ test('server progression accepts only ordered named actions', () => {
   progress = applyProgressAction(progress, 'complete_level_1', 4_000);
   assert.equal(progress.currentLevel, 2);
   assert.ok(progress.flags.includes('level_1_complete'));
+
+  progress = applyProgressAction(progress, 'complete_level_2', 5_000);
+  assert.equal(progress.currentLevel, 3);
+  assert.ok(progress.flags.includes('level_2_complete'));
 });

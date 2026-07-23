@@ -15,6 +15,10 @@ const TRANSITIONS = Object.freeze({
     requireFlag(progress, 'housing_complete');
     return { ...withFlag(progress, 'level_1_complete'), currentLevel: Math.max(progress.currentLevel, 2) };
   },
+  complete_level_2(progress) {
+    requireFlag(progress, 'level_1_complete');
+    return { ...withFlag(progress, 'level_2_complete'), currentLevel: Math.max(progress.currentLevel, 3) };
+  },
 });
 
 function requireFlag(progress, flag) {
@@ -131,5 +135,6 @@ export function publicProgress(progress) {
     companionDiscovered: progress.flags.includes('companion_discovered'),
     housingComplete: progress.flags.includes('housing_complete'),
     levelOneComplete: progress.flags.includes('level_1_complete'),
+    levelTwoComplete: progress.flags.includes('level_2_complete'),
   };
 }

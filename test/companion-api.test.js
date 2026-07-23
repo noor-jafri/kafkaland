@@ -133,6 +133,22 @@ test('API enforces signed progress, grounding, letter evidence, and safe logs', 
     assert.equal(result.payload.type, 'answer');
     assert.equal(result.payload.citations[0].path, 'wiki/05-bank-account.md');
 
+    result = await api.request('/api/companion/progress', {
+      method: 'POST',
+      body: { action: 'complete_level_2' },
+    });
+    assert.equal(result.response.status, 200);
+    assert.equal(result.payload.progress.currentLevel, 3);
+    assert.equal(result.payload.progress.levelTwoComplete, true);
+
+    result = await api.request('/api/companion/messages', {
+      method: 'POST',
+      body: { mode: 'ask', input: 'How do I contact the Ausländerbehörde about a residence permit?' },
+    });
+    assert.equal(result.response.status, 200);
+    assert.equal(result.payload.type, 'answer');
+    assert.ok(result.payload.citations.some((citation) => citation.path === 'wiki/07-auslanderbehorde-residence-permit.md'));
+
     const letter = 'Für die Anmeldung: Bitte reichen Sie die Wohnungsgeberbestätigung bis zum 30.09.2026 ein.';
     result = await api.request('/api/companion/messages', {
       method: 'POST',

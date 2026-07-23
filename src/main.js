@@ -11,16 +11,12 @@ import { AudioSettingsPanel } from './audio/settings.js';
 import { buildEnemies } from './enemies.js';
 import { Nag } from './nag.js';
 import { wasPressed, endFrame } from './input.js';
-import { DIALOGUES, NAG_LINES, VENT_LINES } from './content.js';
+import { DIALOGUES, NAG_LINES, VENT_LINES, CONFLICT_LINES, UNTAETIGKEIT } from './content.js';
 import LEVEL1 from './levels/level1.js';
 import LEVEL2 from './levels/level2.js';
+import LEVEL3 from './levels/level3.js';
 
-const LEVELS = { 1: LEVEL1, 2: LEVEL2 };
-
-function cameraCenterFor(value, viewSize, minimum, maximum) {
-  if (maximum - minimum <= viewSize) return (minimum + maximum) / 2;
-  return Math.max(minimum + viewSize / 2, Math.min(maximum - viewSize / 2, value));
-}
+const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3 };
 
 async function start() {
   const app = document.getElementById('app');
@@ -102,13 +98,20 @@ async function start() {
 
     camera.position.x = player.pos.x;
     camera.position.y = player.pos.y;
+    hud.setChecklist(level.checklist);
     window.__game = { level, player, camera, world, screens, companion, audio: gameAudio, audioSettings }; // debug handle
   }
 
+  function refreshChecklist() {
+    hud.setChecklist(level.checklist);
+  }
+
   function announceLevel() {
+    hud.setMission(level.mission.tag, level.mission.aim);
     hud.setObjective(level.startObjective);
     hud.setDay(1, DAY_TIMER.deadlineDay);
     hud.setFrustration(0, FRUSTRATION.max);
+    hud.setChecklist(level.checklist);
     hud.toast(level.startToast);
   }
 
@@ -118,8 +121,8 @@ async function start() {
       started = true;
       gameAudio.startGame();
       gameAudio.setDeadlineProgress(1, DAY_TIMER.deadlineDay);
-      announceLevel();
       companion.prepare();
+      screens.showLevelIntro(level.mission, announceLevel);
     },
   });
 
@@ -142,6 +145,7 @@ async function start() {
       hud.addItem(it);
       if (it.fact) screens.queueFact(it.fact);
     }
+    refreshChecklist();
   }
 
   function collect(item) {
@@ -149,6 +153,7 @@ async function start() {
     item.mesh.removeFromParent();
     gameAudio.emit('document-pickup');
     hud.addItem(item);
+    refreshChecklist();
     if (item.fact) screens.queueFact(item.fact);
     // Objective checkpoint: picking up the level's key document advances the goal.
     if (item.id === (level.passportItem || 'passport') && level.passportObjective) {
@@ -171,6 +176,22 @@ async function start() {
       companion.open();
       return;
     }
+    // Untätigkeit mini-boss: endure escalating forms; eventually it gives up.
+    if (npc.boss) {
+      gameAudio.emit('building-enter');
+      npc._step = npc._step || 0;
+      if (npc._step < UNTAETIGKEIT.steps.length) {
+        screens.startDialogue(UNTAETIGKEIT.speaker, [UNTAETIGKEIT.steps[npc._step]]);
+        npc._step++;
+      } else {
+        screens.startDialogue(UNTAETIGKEIT.speaker, [UNTAETIGKEIT.giveUp], () => {
+          screens.queueFact('untaetigkeit');
+          npc.mesh.removeFromParent();
+          world.npcs = world.npcs.filter((n) => n !== npc);
+        });
+      }
+      return;
+    }
     if (npc.goal) {
       const hasAll = level.required.every((id) => hud.hasItem(id));
       gameAudio.emit('building-enter');
@@ -181,6 +202,7 @@ async function start() {
           grantItems(d.grants);
           registered = true;
           if (level.id === 1) companion.recordProgress('complete_level_1');
+          if (level.id === 2) companion.recordProgress('complete_level_2');
           pendingWin = true; // win screen shows once the last fact card is dismissed
           hud.setObjective(`✅ ${level.name} complete!`);
         });
@@ -262,17 +284,24 @@ async function start() {
     // Show the win screen once the final fact card is dismissed.
     if (pendingWin && !screens.blocking()) {
       pendingWin = false;
-      screens.showWon(hud.items, level.win, () => loadLevel(2, ['meldebescheinigung']));
+      const nextId = level.id + 1;
+      // The Meldebescheinigung is the master key — it carries forward as the
+      // running "you finally exist" gag; per-level docs stay in their level.
+      const carry = ['meldebescheinigung'];
+      screens.showWon(hud.items, level.win, () => {
+        loadLevel(nextId, carry);
+        screens.showLevelIntro(level.mission, announceLevel);
+      });
     }
 
     const frozen = wasBlocking || !started;
     player.update(dt, world, frozen);
 
-    // Camera follows the player while keeping edge canopies inside the view.
+    // Camera follows the player, clamped to map edges.
     const viewW = camera.right - camera.left;
     const viewH = camera.top - camera.bottom;
-    const cx = cameraCenterFor(player.pos.x, viewW, world.visualBounds.minX, world.visualBounds.maxX);
-    const cy = cameraCenterFor(player.pos.y, viewH, world.visualBounds.minY, world.visualBounds.maxY);
+    const cx = Math.max(viewW / 2, Math.min(world.width - viewW / 2, player.pos.x));
+    const cy = Math.max(viewH / 2, Math.min(world.height - viewH / 2, player.pos.y));
     camera.position.x += (cx - camera.position.x) * Math.min(1, dt * 8);
     camera.position.y += (cy - camera.position.y) * Math.min(1, dt * 8);
 
@@ -290,7 +319,9 @@ async function start() {
         curDay = day;
         hud.setDay(curDay, DAY_TIMER.deadlineDay);
         gameAudio.setDeadlineProgress(curDay, DAY_TIMER.deadlineDay);
-        if (curDay > DAY_TIMER.deadlineDay && !lateWarned) {
+        // Holding a Fiktionsbescheinigung suspends the deadline pressure (its
+        // whole real-world purpose — it keeps your stay legal while you wait).
+        if (curDay > DAY_TIMER.deadlineDay && !lateWarned && !hud.hasItem('fiktionsbescheinigung')) {
           lateWarned = true;
           hud.toast('⚠️ Past the 14-day deadline! (Small fine — but Nuremberg lets it slide. Keep going.)');
         }
@@ -304,20 +335,26 @@ async function start() {
         if (world.trail.length > TRAIL.maxPoints) world.trail.shift();
       }
 
-      // Enemies (slimes, bats): contact adds frustration.
+      // Enemies (slimes, bats, conflict officials): contact adds frustration,
+      // except the conflict official, who instead runs a one-time comedy loop.
       hitCooldown = Math.max(0, hitCooldown - dt);
       for (const e of enemies) {
         e.update(dt);
-        if (hitCooldown === 0) {
-          const d = Math.hypot(e.pos.x - player.pos.x, e.pos.y - player.pos.y);
-          if (d < e.contactRadius) {
-            hitCooldown = FRUSTRATION.hitCooldown;
-            gameAudio.emit('slime-collision');
-            addFrustration(FRUSTRATION.perSlimeHit);
-            hud.toast(e.kind === 'bat'
-              ? '🦇 Processing delay! Your file drops to the bottom of the pile. (+frustration)'
-              : '🟢 Red tape! Conflicting information! (+frustration)');
+        const d = Math.hypot(e.pos.x - player.pos.x, e.pos.y - player.pos.y);
+        if (e.kind === 'conflict') {
+          if (!e.resolved && d < e.contactRadius) {
+            e.resolved = true;
+            screens.startDialogue(CONFLICT_LINES.speaker, CONFLICT_LINES.lines);
           }
+          continue;
+        }
+        if (hitCooldown === 0 && d < e.contactRadius) {
+          hitCooldown = FRUSTRATION.hitCooldown;
+          gameAudio.emit('slime-collision');
+          addFrustration(FRUSTRATION.perSlimeHit);
+          hud.toast(e.kind === 'bat'
+            ? '🦇 Processing delay! Your file drops to the bottom of the pile. (+frustration)'
+            : '🟢 Red tape! Conflicting information! (+frustration)');
         }
       }
 
@@ -346,14 +383,13 @@ async function start() {
         frustration = Math.max(0, frustration - FRUSTRATION.ventDrain);
         hud.setFrustration(frustration, FRUSTRATION.max);
         hud.toast(VENT_LINES[Math.floor(Math.random() * VENT_LINES.length)]);
+        tree.mesh.position.x += 1.5; // tiny nudge; eased back below
         tree._shake = 0.25;
       }
       for (const t of world.trees) {
         if (t._shake > 0) {
-          t._shake = Math.max(0, t._shake - dt);
-          t.mesh.position.x = t.restX + Math.sin(elapsed * 60) * 1.2;
-        } else {
-          t.mesh.position.x = t.restX;
+          t._shake -= dt;
+          t.mesh.position.x += Math.sin(elapsed * 60) * 0.6;
         }
       }
 

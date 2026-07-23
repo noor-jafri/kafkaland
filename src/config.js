@@ -7,9 +7,6 @@ export const ASSETS = {
   grassTileset: '/assets/Tileset/Autotile_Grass_and_Dirt_Path_Tileset.png',
   natureTileset: '/assets/Tileset/Nature_Tileset.png',
   craftpixHouse: '/assets/Craftpix/house.png',
-  craftpixTree1: '/assets/Craftpix/trees/Tree1.png',
-  craftpixTree2: '/assets/Craftpix/trees/Tree2.png',
-  craftpixTree3: '/assets/Craftpix/trees/Tree3.png',
   shadow: '/assets/Sprites/Sprite_Shadow.png',
   bunnyIdle: '/assets/Sprites/Characters/Bunny/IDLE/Bunny_Idle.png',
   bunnyRun: '/assets/Sprites/Characters/Bunny/RUN/Bunny_Run.png',
@@ -22,6 +19,8 @@ export const REGIONS = {
   grass: { x: 186, y: 52, w: 16, h: 16 },
   grassSprout: { x: 184, y: 48, w: 16, h: 16 }, // grass with a tiny sprout, for variety
   dirt: { x: 256, y: 40, w: 16, h: 16 },
+  tree: { x: 14, y: 20, w: 42, h: 46 },
+  pine: { x: 48, y: 20, w: 36, h: 52 },
   rock: { x: 222, y: 18, w: 32, h: 34 },
 };
 
@@ -88,7 +87,7 @@ export const NAG = {
   firstDelay: 16, // seconds before he can first appear
   interval: 30, // rough seconds between appearances (was 55 — now near-constant pressure)
   refleeInterval: 18, // he comes back faster after giving up than after catching you
-  speed: 74, // still slightly slower than the player (PLAYER.speed = 90)
+  speed: 50, // slow, plodding menace — easily outrun (PLAYER.speed = 90)
   catchRadius: 20,
   giveUp: 24, // seconds of failing to catch you before he flees (was 10)
   trailReachRadius: 12, // how close to a trail point before advancing to the next

@@ -1,19 +1,8 @@
-# Procedural audio and integration record
-
-## Integration heads
-
-This integration started at `origin/main` `8f587bf2f0f60fc3422b583cb31ab933f2ddc6e4` and merged the complete heads below without changing or closing either source PR:
-
-- PR 2: https://github.com/noor-jafri/kafkaland/pull/2 at `b0f9febdcc0b47cb174c8c15c42c7ca34e70d6c0`
-- PR 3: https://github.com/noor-jafri/kafkaland/pull/3 at `33e0f01787c1e869d169971a3ed62b015e17355c`
-
-Both commits are ancestors of the integration branch. Every path changed by either PR relative to its recorded base remains present in the integration tree. PR 2's direct Markdown retrieval, signed progression filtering, companion/letter UI, and Craftpix trees remain present. PR 3's procedural modules, tests, and audition page remain present. Unrelated files removed by the latest `main` remain removed.
+# Procedural audio
 
 ## Provenance
 
 All audio is original procedural Web Audio synthesis in `src/audio/`. It uses oscillators and deterministic noise buffers at runtime. There are no recordings, downloaded audio assets, music-generation prompts, external audio APIs, paid services, subscriptions, or third-party melodies. As a result, there are no audio asset licenses or attribution obligations. The source direction was the task brief: cozy and hopeful pixel folk, gentle bureaucratic comedy, restrained repetition, and no vocals or artist imitation.
-
-The separately licensed Craftpix visual assets and exact supplied license evidence remain documented under `assets/Craftpix/`.
 
 ## Inventory
 
@@ -39,6 +28,4 @@ The compact effect catalog in `src/audio/effects.js` covers grass/path/wood/tile
 ```sh
 npm test
 npm run build
-git merge-base --is-ancestor b0f9febdcc0b47cb174c8c15c42c7ca34e70d6c0 HEAD
-git merge-base --is-ancestor 33e0f01787c1e869d169971a3ed62b015e17355c HEAD
 ```

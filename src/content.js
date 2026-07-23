@@ -86,6 +86,31 @@ export const FACT_CARDS = {
     title: 'Steuer-ID',
     body: "Your Steuer-Identifikationsnummer is 11 digits, assigned for life, and arrives by post a few weeks after you register. Your employer needs it or you get taxed at the brutal emergency rate. Guard the letter.",
   },
+  // --- Level 3: The Ausländerbehörde Gauntlet ---
+  fiktionsbescheinigung: {
+    title: 'Fiktionsbescheinigung',
+    body: "A real bridging document: if your residence permit isn't ready before your visa expires, this keeps your stay legal — and often lets you keep working — in the meantime. It's the reason a backlog doesn't automatically make you illegal.",
+  },
+  eat_card: {
+    title: 'eAT (Aufenthaltstitel)',
+    body: "The electronic residence permit card. In Nuremberg, converting a visa into this card has been reported to take well over a year in some cases — the office blames staff shortages of around 15% of positions. Appointments are online-only via 'Mein Nürnberg'; walk-ins are turned away.",
+  },
+  berechtigungsschein: {
+    title: 'Integrationskurs',
+    body: "Integration courses (language + a 'Leben in Deutschland' orientation module) are often not just an offer but an obligation attached to your permit. Finishing one can even shorten the years-to-citizenship clock.",
+  },
+  zab_zeugnisbewertung: {
+    title: 'ZAB-Zeugnisbewertung',
+    body: "Getting your foreign degree formally recognised (via the ZAB) is optional but powerful — skip it and you risk 'deskilling'. Under 30% of non-EU academics abroad end up in jobs that actually match their qualifications.",
+  },
+  arbeitsvertrag: {
+    title: 'Arbeitsvertrag',
+    body: "The job contract — the true prize. With recognised qualifications it's worth more; without them, people still sign under time pressure. Either way, a signed Arbeitsvertrag is what turns 'surviving the paperwork' into 'living here'.",
+  },
+  untaetigkeit: {
+    title: 'Untätigkeitsklage',
+    body: "This is real: German courts don't accept 'we're short-staffed' as a valid excuse for an office ignoring you indefinitely. There's an actual lawsuit — the Untätigkeitsklage — to force a decision when an authority stalls.",
+  },
 };
 
 // NPC building dialogues. Each is a list of lines; some grant items when finished.
@@ -179,6 +204,89 @@ export const DIALOGUES = {
     ],
     grants: ['steuerid'],
   },
+
+  // --- Level 3: The Ausländerbehörde Gauntlet ---
+  auslaenderbehoerde: {
+    speaker: 'Ausländerbehörde Officer',
+    lines: [
+      "Residence permit conversion. You have the Fiktionsbescheinigung? Good — it's why we haven't declared you illegal while you waited.",
+      "Biometrics… photo… fee… Your eAT (Aufenthaltstitel) is approved. The card that says: you may stay.",
+    ],
+    grants: ['eat_card'],
+  },
+  auslaenderbehoerde_needs_fiktion: {
+    speaker: 'Ausländerbehörde Officer',
+    lines: [
+      "Your visa is expiring and your permit isn't ready. Without a Fiktionsbescheinigung you have no legal standing here.",
+      "Pick one up at the front wing first. Then we can talk about your eAT.",
+    ],
+  },
+  integrationskurs: {
+    speaker: 'VHS Course Office',
+    lines: [
+      "You hold your eAT? Then you're eligible — and, honestly, likely obliged — to take the Integrationskurs.",
+      "Language plus 'Leben in Deutschland'. Here's your Bescheinigung. It even shaves time off your citizenship clock.",
+    ],
+    grants: ['berechtigungsschein'],
+  },
+  integrationskurs_needs_eat: {
+    speaker: 'VHS Course Office',
+    lines: [
+      "Enrolment requires a valid residence permit. Get your eAT from the Ausländerbehörde first.",
+    ],
+  },
+  recognition: {
+    speaker: 'Recognition Authority (ZAB)',
+    lines: [
+      "You want your foreign degree recognised? Wise — it's optional, but skipping it is how good people end up underemployed.",
+      "Evaluation complete. Here is your ZAB-Zeugnisbewertung. Your qualifications now officially count.",
+    ],
+    grants: ['zab_zeugnisbewertung'],
+  },
+  recognition_needs_eat: {
+    speaker: 'Recognition Authority (ZAB)',
+    lines: [
+      "We only process residents. Come back once you hold your eAT.",
+    ],
+  },
+  employer_incomplete: {
+    speaker: 'Employer',
+    lines: [
+      "I'd love to sign you. HR just needs to see that you're actually allowed to work and settled in.",
+    ],
+  },
+  employer_complete: {
+    speaker: 'Employer',
+    lines: [
+      "eAT — you can work. Integrationskurs — you're settling in. That's everything HR wanted.",
+      "Here's your Arbeitsvertrag. Welcome aboard. You didn't just survive the system — you're living here now.",
+    ],
+    grants: ['arbeitsvertrag'],
+  },
+};
+
+// Signature gag: the "conflicting information" official at a wing door.
+export const CONFLICT_LINES = {
+  speaker: 'Confused Official',
+  lines: [
+    "Halt. You need Form A to pass here.",
+    "…You have Form A? Ah. No, no — not that one. The OTHER one.",
+    "…This one is identical to the first in every visible way. But it is the wrong one. Obviously.",
+    "…Ach. You know what? Go through. NEXT!",
+  ],
+};
+
+// Signature gag: the Untätigkeit mini-boss. One line per interaction; after the
+// last, it gives up and hands over the Untätigkeitsklage fact.
+export const UNTAETIGKEIT = {
+  speaker: 'Case-worker',
+  steps: [
+    "Ah, a new applicant. First, this stamp goes on a fresh form.",
+    "That form now requires a counter-stamp. Please wait. Indefinitely.",
+    "The counter-stamp needs a cover sheet. And a copy. In triplicate.",
+    "…You're STILL here? Most people have given up by now. Concerning.",
+  ],
+  giveUp: "Fine. FINE. Processed. Take it and go — before I locate another form.",
 };
 
 // The Collector barks (picked when he spawns / catches you). Menacing, but dry.

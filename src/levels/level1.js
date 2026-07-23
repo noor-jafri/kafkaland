@@ -7,29 +7,29 @@
 //   @  player start (train platform)
 //   1  passport pickup (hidden)   2  SIM pickup (optional, hidden)
 //   H  hostel (flavor)   M  apartment (grants flat docs)   G  Bürgeramt (goal)
-//   s  slime spawn (bureaucratic friction)
+//   Q  Marlene companion kiosk   s  slime spawn (bureaucratic friction)
 //
 // The map is a winding little town: the direct line from the platform to the
 // offices is blocked, and the passport is tucked in a dead-end pocket so you
 // have to actually explore for it. Reachability is regression-checked.
 export const MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-  'T.......T.......P.......P..............T',
-  'T.......T.......P.......P..............T',
-  'T.....H.T.......P.......P....TTTTTT....T',
-  'T.......T...T...P.....M.P..............T',
-  'T.......T....P..P.....T.P..............T',
-  'T.......T.......P.......P..............T',
-  'T...............P.......P..............T',
-  'T.@.K..........sP.................T....T',
-  'T...............P...T......s.....R.....T',
-  'T...................T.......T..........T',
-  'T.TTTTT.....T.......T.......T..........T',
-  'T.T...T.....T.......T.....P.T....G.....T',
-  'T.T1..T...T.T.......T.......T..........T',
-  'T.TR..T.....T.....R.T.......T..TTTTTT..T',
-  'T.T.........T.......T.......T..T..2.T..T',
-  'T...........T.......T.......T..T.......T',
+  'T......................................T',
+  'T..........TP..........................T',
+  'T.....H....P............T..............T',
+  'T....................M.................T',
+  'T......................................T',
+  'T.TTT............T............PT.......T',
+  'T.T1..............P...........P........T',
+  'T......................................T',
+  'T.@.Q.........s...................R....T',
+  'T......................................T',
+  'T.......T........................G.....T',
+  'T........P.............................T',
+  'T...................R............TTT...T',
+  'T.........................PT.....T.2...T',
+  'T.............T........................T',
+  'T......................................T',
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
 
@@ -53,9 +53,10 @@ export const GRANTED = {
 //   nextObjective : objective text set after a successful interaction.
 //   goal + completeDialogue/incompleteDialogue : the level's delivery point.
 export const BUILDINGS = {
-  H: { id: 'hostel', dialogue: 'hostel', prompt: 'Talk to the hostel clerk' },
+  H: { id: 'hostel', label: 'Hostel', dialogue: 'hostel', prompt: 'Talk to the hostel clerk' },
   M: {
     id: 'apartment',
+    label: 'Apartment',
     dialogue: 'apartment',
     prompt: 'Ask the Landlord about the flat',
     requires: ['passport'],
@@ -66,6 +67,7 @@ export const BUILDINGS = {
   },
   G: {
     id: 'buergeramt',
+    label: 'Bürgeramt',
     goal: true,
     prompt: 'Enter the Bürgeramt',
     completeDialogue: 'buergeramt_complete',
@@ -77,7 +79,7 @@ export const BUILDINGS = {
 export const REQUIRED = ['passport', 'mietvertrag', 'wohnungsgeberbestaetigung'];
 
 export const COMPANIONS = {
-  K: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
+  Q: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
 };
 
 export const LEVEL1 = {
@@ -89,9 +91,24 @@ export const LEVEL1 = {
   buildings: BUILDINGS,
   companions: COMPANIONS,
   required: REQUIRED,
-  startObjective: '🎯 Anmeldung: first find your Reisepass (it is hidden), then rent a flat, then register at the Bürgeramt.',
+  mission: {
+    tag: 'LEVEL 1 · ARRIVE',
+    aim: 'Register your address (Anmeldung) at the Bürgeramt.',
+    steps: [
+      'Find your Reisepass — a short walk off the main path.',
+      'Rent a flat from the Landlord (he needs your passport).',
+      'Deliver passport + Mietvertrag + Wohnungsgeberbestätigung to the Bürgeramt.',
+    ],
+  },
+  checklist: [
+    { id: 'passport', name: 'Reisepass' },
+    { id: 'mietvertrag', name: 'Mietvertrag' },
+    { id: 'wohnungsgeberbestaetigung', name: 'Wohnungsgeberbestätigung' },
+    { id: 'sim', name: 'Prepaid-SIM', optional: true },
+  ],
+  startObjective: '🎯 Find your Reisepass (it is hidden nearby).',
   startToast: '🚆 You step off the train in Nuremberg. → Move with WASD.',
-  passportObjective: '🎯 You have your passport. Now find a flat — talk to the Landlord (M).',
+  passportObjective: '🎯 You have your passport. Now rent a flat — talk to the Landlord (M).',
   win: {
     title: '✅ LEVEL 1 COMPLETE',
     sub: 'You are officially registered in Nuremberg.',

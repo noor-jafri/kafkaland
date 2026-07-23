@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
 import { spriteMesh } from './textures.js';
 import { createHouseMesh, houseCenterXForEntrance } from './house.js';
-import { createTreeMesh, TREE_ART, treeMeshPosition, treeVariantIndexFor, treeVisualBounds } from './tree.js';
 
 // Painter's sort for the top-down view: things lower on screen render on top.
 export function depthForY(y) {
@@ -25,9 +24,8 @@ export function buildWorld(scene, textures, level) {
   const items = []; // pickable documents
   const npcs = []; // interactable buildings
   const trees = []; // punchable-tree world positions (for the Vent Mechanic)
-  const enemySpawns = { slime: [], bat: [] }; // world positions, keyed by kind
+  const enemySpawns = { slime: [], bat: [], conflict: [] }; // world positions, keyed by kind
   const trail = []; // breadcrumb of recent player positions (the Nag follows it)
-  const visualBounds = { minX: 0, maxX: width, minY: 0, maxY: height };
   let playerStart = new THREE.Vector2(width / 2, height / 2);
 
   // Everything a level owns hangs off this group, so a level switch can remove
@@ -63,6 +61,8 @@ export function buildWorld(scene, textures, level) {
 
   // --- Scenery objects ---
   const sceneryDefs = {
+    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1, punchable: true },
+    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1, punchable: true },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
   };
 
@@ -75,21 +75,6 @@ export function buildWorld(scene, textures, level) {
 
       if (ch === '@') {
         playerStart = new THREE.Vector2(worldX, worldY);
-      } else if (ch === 'T' || ch === 'P') {
-        const art = TREE_ART[treeVariantIndexFor({ column: c, row: r, symbol: ch })];
-        const groundY = tileBottom - 2;
-        const position = treeMeshPosition(art, worldX, groundY);
-        const bounds = treeVisualBounds(art, worldX, groundY);
-        const mesh = createTreeMesh(textures, art);
-        mesh.position.set(position.x, position.y, depthForY(groundY));
-        root.add(mesh);
-        blocked.add(`${c},${r}`);
-        trees.push({ x: worldX, y: worldY, mesh, restX: position.x, variant: art.id });
-        const canopyMargin = 4;
-        visualBounds.minX = Math.min(visualBounds.minX, bounds.minX - canopyMargin);
-        visualBounds.maxX = Math.max(visualBounds.maxX, bounds.maxX + canopyMargin);
-        visualBounds.minY = Math.min(visualBounds.minY, bounds.minY - canopyMargin);
-        visualBounds.maxY = Math.max(visualBounds.maxY, bounds.maxY + canopyMargin);
       } else if (sceneryDefs[ch]) {
         const def = sceneryDefs[ch];
         const mesh = spriteMesh(textures[def.tex], def.region, { scale: def.scale });
@@ -97,17 +82,22 @@ export function buildWorld(scene, textures, level) {
         mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         root.add(mesh);
         blocked.add(`${c},${r}`);
+        if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
       } else if (BUILDINGS[ch]) {
         const mesh = createHouseMesh(textures);
         const h = mesh.geometry.parameters.height;
-        mesh.position.set(
-          houseCenterXForEntrance(worldX),
-          tileBottom + h / 2 - 2,
-          depthForY(tileBottom)
-        );
+        const centerX = houseCenterXForEntrance(worldX);
+        mesh.position.set(centerX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         root.add(mesh);
         for (let offset = -2; offset <= 2; offset++) {
           blocked.add(`${c + offset},${r}`);
+        }
+        // A readable name banner floating just above the roof.
+        if (BUILDINGS[ch].label) {
+          const banner = makeLabelMesh(BUILDINGS[ch].label);
+          const roofTop = tileBottom + h - 2;
+          banner.position.set(centerX, roofTop + 7, depthForY(tileBottom) + 0.5);
+          root.add(banner);
         }
         npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
       } else if (COMPANIONS[ch]) {
@@ -120,6 +110,17 @@ export function buildWorld(scene, textures, level) {
         enemySpawns.slime.push({ x: worldX, y: worldY });
       } else if (ch === 'b') {
         enemySpawns.bat.push({ x: worldX, y: worldY });
+      } else if (ch === 'c') {
+        enemySpawns.conflict.push({ x: worldX, y: worldY });
+      } else if (ch === 'U') {
+        // The "Untätigkeit" mini-boss: a big, immovable case-worker blob.
+        const mesh = makeBossMesh();
+        mesh.position.set(worldX, worldY + 10, depthForY(worldY));
+        root.add(mesh);
+        const banner = makeLabelMesh('Untätigkeit');
+        banner.position.set(worldX, worldY + 34, depthForY(worldY) + 0.5);
+        root.add(banner);
+        npcs.push({ id: 'untaetigkeit', boss: true, prompt: 'Endure the case-worker', x: worldX, y: worldY, mesh });
       } else if (DOCUMENTS[ch]) {
         const doc = DOCUMENTS[ch];
         const mesh = makeDocumentMesh();
@@ -130,7 +131,69 @@ export function buildWorld(scene, textures, level) {
     }
   }
 
-  return { map: MAP, width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root, visualBounds };
+  return { map: MAP, width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root };
+}
+
+// A crisp parchment name banner for a building, drawn on a canvas. Rendered at
+// 3x so the text stays sharp under the pixel-art NearestFilter at CAMERA_ZOOM.
+function makeLabelMesh(text) {
+  const S = 3; // supersample factor
+  const padX = 8 * S;
+  const fontPx = 11 * S;
+  const measure = document.createElement('canvas').getContext('2d');
+  measure.font = `bold ${fontPx}px "Courier New", monospace`;
+  const textW = Math.ceil(measure.measureText(text).width);
+  const c = document.createElement('canvas');
+  c.width = textW + padX * 2;
+  c.height = 20 * S;
+  const ctx = c.getContext('2d');
+  // parchment plate with border
+  ctx.fillStyle = 'rgba(20,20,30,0.9)';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#e8d5a0';
+  ctx.fillRect(1 * S, 1 * S, c.width - 2 * S, c.height - 2 * S);
+  ctx.fillStyle = '#2a2620';
+  ctx.font = `bold ${fontPx}px "Courier New", monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, c.width / 2, c.height / 2 + S);
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  const w = c.width / S;
+  const h = c.height / S;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+  );
+  return mesh;
+}
+
+// The Untätigkeit mini-boss: a large sour grey-green blob clutching a red stamp.
+function makeBossMesh() {
+  const c = document.createElement('canvas');
+  c.width = 40;
+  c.height = 40;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#5c6b4a'; // sickly bureaucratic green
+  ctx.beginPath();
+  ctx.ellipse(20, 24, 16, 13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#47543a';
+  ctx.fillRect(6, 24, 28, 8);
+  ctx.fillStyle = '#1c1c1c'; // scowling eyes
+  ctx.fillRect(13, 18, 4, 5);
+  ctx.fillRect(23, 18, 4, 5);
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(14, 28, 12, 2); // flat frown
+  ctx.fillStyle = '#b01818'; // red stamp held aloft
+  ctx.fillRect(28, 6, 9, 6);
+  ctx.fillStyle = '#7a1010';
+  ctx.fillRect(31, 12, 3, 6);
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  return new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
 }
 
 // A little paper document, drawn on a canvas (no asset needed).
@@ -158,8 +221,7 @@ function makeDocumentMesh() {
   return mesh;
 }
 
-// Marlene's records kiosk is drawn from hard-edged pixels so the companion
-// belongs to the same world as the bundled sprites without adding a new asset.
+// Marlene's records kiosk uses hard-edged pixels that match the existing world.
 function makeCompanionMesh() {
   const canvas = document.createElement('canvas');
   canvas.width = 24;
@@ -173,10 +235,8 @@ function makeCompanionMesh() {
   ctx.fillRect(2, 18, 20, 2);
   ctx.fillRect(4, 28, 3, 3);
   ctx.fillRect(17, 28, 3, 3);
-
   ctx.fillStyle = '#493126';
-  ctx.fillRect(7, 5, 10, 14);
-  ctx.fillRect(5, 8, 14, 8);
+  ctx.fillRect(5, 8, 14, 11);
   ctx.fillStyle = '#a76540';
   ctx.fillRect(7, 7, 10, 10);
   ctx.fillStyle = '#f3e4b3';
@@ -187,8 +247,6 @@ function makeCompanionMesh() {
   ctx.fillRect(13, 10, 2, 2);
   ctx.fillStyle = '#e1a83f';
   ctx.fillRect(11, 13, 3, 2);
-  ctx.fillRect(12, 15, 1, 2);
-
   ctx.fillStyle = '#f1e5bd';
   ctx.fillRect(16, 1, 7, 8);
   ctx.fillStyle = '#9f3e35';
