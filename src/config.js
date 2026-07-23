@@ -6,7 +6,7 @@ export const TILE = 16;
 export const ASSETS = {
   grassTileset: '/assets/Tileset/Autotile_Grass_and_Dirt_Path_Tileset.png',
   natureTileset: '/assets/Tileset/Nature_Tileset.png',
-  houseTileset: '/assets/Tileset/House_Tileset.png',
+  craftpixHouse: '/assets/Craftpix/house.png',
   shadow: '/assets/Sprites/Sprite_Shadow.png',
   bunnyIdle: '/assets/Sprites/Characters/Bunny/IDLE/Bunny_Idle.png',
   bunnyRun: '/assets/Sprites/Characters/Bunny/RUN/Bunny_Run.png',
@@ -22,9 +22,6 @@ export const REGIONS = {
   tree: { x: 14, y: 20, w: 42, h: 46 },
   pine: { x: 48, y: 20, w: 36, h: 52 },
   rock: { x: 222, y: 18, w: 32, h: 34 },
-  // Mini shop/house fronts from the house tileset (a column of four 16x16 buildings).
-  shopRedA: { x: 255, y: 112, w: 17, h: 16 }, // awning + cross window
-  shopRedB: { x: 255, y: 128, w: 17, h: 16 }, // pointed roof + cross window
 };
 
 // Character sheets: 48x48 frames, one row per facing direction.

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
 import { MAP, DOCUMENTS, BUILDINGS } from './map.js';
 import { spriteMesh } from './textures.js';
+import { createHouseMesh, houseCenterXForEntrance } from './house.js';
 
 // Painter's sort for the top-down view: things lower on screen render on top.
 export function depthForY(y) {
@@ -54,12 +55,6 @@ export function buildWorld(scene, textures) {
     P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1, punchable: true },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
   };
-  // Buildings: art is reused; role comes from map.js BUILDINGS.
-  const buildingArt = {
-    H: REGIONS.shopRedA,
-    M: REGIONS.shopRedA,
-    G: REGIONS.shopRedB, // Bürgeramt gets the distinct pointed-roof front
-  };
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -78,18 +73,19 @@ export function buildWorld(scene, textures) {
         scene.add(mesh);
         blocked.add(`${c},${r}`);
         if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
-      } else if (buildingArt[ch]) {
-        const region = buildingArt[ch];
-        const mesh = spriteMesh(textures.houseTileset, region, { scale: 3 });
-        const h = region.h * 3;
-        mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
+      } else if (BUILDINGS[ch]) {
+        const mesh = createHouseMesh(textures);
+        const h = mesh.geometry.parameters.height;
+        mesh.position.set(
+          houseCenterXForEntrance(worldX),
+          tileBottom + h / 2 - 2,
+          depthForY(tileBottom)
+        );
         scene.add(mesh);
-        // Building footprint blocks a few tiles wide.
-        blocked.add(`${c},${r}`);
-        blocked.add(`${c + 1},${r}`);
-        blocked.add(`${c - 1},${r}`);
-        const role = BUILDINGS[ch];
-        npcs.push({ ...role, x: worldX, y: worldY, mesh });
+        for (let offset = -2; offset <= 2; offset++) {
+          blocked.add(`${c + offset},${r}`);
+        }
+        npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
       } else if (ch === 's') {
         slimeSpawns.push({ x: worldX, y: worldY });
       } else if (DOCUMENTS[ch]) {

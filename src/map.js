@@ -7,19 +7,19 @@
 //   R  rock          (blocks)
 //   @  player start (train platform, far left)
 //   1  passport pickup      2  SIM pickup
-//   H  Hostel building     (NPC: flavor / respawn)
-//   M  Apartment building  (NPC: grants Mietvertrag + Wohnungsgeberbestätigung)
-//   G  Bürgeramt building  (NPC: delivery point / level goal)
+//   H  Craftpix hostel     (NPC: flavor / respawn)
+//   M  Craftpix apartment  (NPC: grants Mietvertrag + Wohnungsgeberbestätigung)
+//   G  Craftpix Bürgeramt  (NPC: delivery point / level goal)
 //   s  Slime spawn         (hazard: bureaucratic friction)
 //
-// Buildings render 3x scale and block a small footprint; the player interacts
-// by standing near them (radius-based), so exact tiles around them stay clear.
+// Buildings use the shared Craftpix house, align their doors to their map cells,
+// and block a small footprint. Interactions remain radius-based.
 
 export const MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'T......................................T',
-  'T...H..................................T',
-  'T............P.....................R...T',
+  'T......................................T',
+  'T...H........P.....................R...T',
   'T..1.......................T...........T',
   'T.@.......#############################T',
   'T..2......#............................T',
