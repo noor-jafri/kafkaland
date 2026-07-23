@@ -71,17 +71,17 @@ test('preference parsing and local storage helpers are schema-safe and failure-s
 test('ducking chooses the quietest active profile per channel', () => {
   assert.deepEqual(combineDucking([]), { music: 1, ambience: 1, effects: 1 });
   assert.deepEqual(combineDucking(['dialogue']), {
-    music: 0.32,
-    ambience: 0.58,
-    effects: 0.78,
+    music: 0.45,
+    ambience: 0.66,
+    effects: 0.82,
   });
   assert.deepEqual(combineDucking(new Map([
     ['dialogue', 'dialogue'],
     ['custom', { music: 0.5, ambience: 0.2, effects: 2 }],
   ])), {
-    music: 0.32,
+    music: 0.45,
     ambience: 0.2,
-    effects: 0.78,
+    effects: 0.82,
   });
 });
 

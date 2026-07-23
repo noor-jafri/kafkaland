@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 function keepServerOnlyMarkdownPrivate() {
@@ -38,6 +39,12 @@ export default defineConfig({
   // 500 kB warning threshold; its compressed production payload is about 132 kB.
   build: {
     chunkSizeWarningLimit: 550,
+    rollupOptions: {
+      input: {
+        game: resolve(import.meta.dirname, 'index.html'),
+        audition: resolve(import.meta.dirname, 'src/audio/audition.html'),
+      },
+    },
   },
   server: {
     host: '127.0.0.1',

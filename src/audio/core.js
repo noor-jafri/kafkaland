@@ -32,16 +32,18 @@ export const DEFAULT_AUDIO_PREFERENCES = deepFreeze({
  */
 export const DUCKING_PROFILES = deepFreeze({
   dialogue: {
-    music: 0.32,
-    ambience: 0.58,
-    effects: 0.78,
+    // 0.45 is about -6.9 dB, leaving speech clear without making the world vanish.
+    music: 0.45,
+    ambience: 0.66,
+    effects: 0.82,
     attackSeconds: 0.12,
     releaseSeconds: 0.45,
   },
   companion: {
-    music: 0.22,
-    ambience: 0.42,
-    effects: 0.7,
+    // 0.4 is about -8 dB for the wider response/listening pocket.
+    music: 0.4,
+    ambience: 0.56,
+    effects: 0.76,
     attackSeconds: 0.1,
     releaseSeconds: 0.55,
   },

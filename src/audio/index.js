@@ -14,6 +14,8 @@
  */
 
 export { AudioManager } from './AudioManager.js';
+export { GameAudio, GAME_AUDIO_EVENT_EFFECTS } from './game-audio.js';
+export { AudioSettingsPanel } from './settings.js';
 export {
   AUDIO_CHANNELS,
   AUDIO_OUTPUT_CHANNELS,

@@ -200,6 +200,14 @@ function makeCompanionMesh() {
   return mesh;
 }
 
+// Footstep surface at a world position. Level 1 currently exposes grass and path;
+// wood and tile remain available to later interiors through the same audio API.
+export function surfaceAt(world, x, y) {
+  const column = Math.max(0, Math.min(world.cols - 1, Math.floor(x / TILE)));
+  const row = Math.max(0, Math.min(world.rows - 1, Math.floor((world.height - y) / TILE)));
+  return MAP[row]?.[column] === '#' ? 'path' : 'grass';
+}
+
 // AABB collision against blocked tiles. Returns true if the box hits a wall.
 export function resolveCollision(world, x, y, halfW, halfH) {
   const minC = Math.floor((x - halfW) / TILE);

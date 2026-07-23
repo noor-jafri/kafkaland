@@ -19,30 +19,37 @@ const chord = (beat, pitches, durationBeats, voice, velocity) => (
 // They are data rather than melodies copied from recordings, and all timbres
 // are synthesized at runtime.
 const cozyEvents = [
-  ...chord(0, [50, 57, 62], 3.7, 'warmPad', 0.26),
-  ...chord(4, [48, 55, 59], 3.7, 'warmPad', 0.24),
-  ...chord(8, [45, 52, 57], 3.7, 'warmPad', 0.25),
-  ...chord(12, [47, 54, 59], 3.7, 'warmPad', 0.24),
-  ...chord(16, [50, 57, 62], 3.7, 'warmPad', 0.25),
-  ...chord(20, [53, 57, 60], 3.7, 'warmPad', 0.23),
-  ...chord(24, [45, 52, 57], 3.7, 'warmPad', 0.24),
-  ...chord(28, [47, 54, 60], 3.7, 'warmPad', 0.23),
-  ...[50, 57, 64, 59, 52, 60, 55, 62, 50, 57, 65, 60, 48, 55, 62, 54]
-    .map((pitch, index) => tone(index * 2 + (index % 3 === 1 ? 0.25 : 0), pitch, 0.62, 'feltPluck', 0.34)),
+  // Soft guitar leaves regular breathing room instead of filling every beat.
+  ...[50, 57, 62, 57, 48, 55, 59, 55, 45, 52, 57, 52, 47, 54, 59, 54]
+    .map((pitch, index) => tone(index * 2 + (index % 4 === 1 ? 0.12 : 0), pitch, 0.72, 'softGuitar', 0.31)),
+  // A small hopeful clarinet answer appears once per two-bar phrase.
+  ...[
+    [2.5, 66, 1.35], [6.75, 64, 0.9], [10.5, 62, 1.35], [14.75, 64, 0.9],
+    [18.5, 66, 1.35], [22.75, 69, 0.9], [26.5, 64, 1.35], [30.5, 62, 0.9],
+  ].map(([beat, pitch, duration]) => tone(beat, pitch, duration, 'clarinet', 0.19)),
+  // Marimba answers the guitar with a quiet, uneven two-note pattern.
+  ...[
+    [1, 69], [3.25, 66], [5, 67], [7.5, 64], [9, 64], [11.25, 69], [13, 66], [15.5, 62],
+    [17, 69], [19.25, 66], [21, 72], [23.5, 69], [25, 64], [27.25, 67], [29, 66], [31.25, 62],
+  ].map(([beat, pitch]) => tone(beat, pitch, 0.38, 'marimba', 0.2)),
   ...[38, 36, 33, 35, 38, 41, 33, 35]
-    .map((pitch, index) => tone(index * 4, pitch, 1.3, 'roundBass', 0.3)),
+    .map((pitch, index) => tone(index * 4, pitch, 1.35, 'roundBass', 0.26)),
+  ...Array.from({ length: 16 }, (_, index) => noise(index * 2 + 1.5, 0.1, 'folkBrush', index % 4 === 3 ? 0.12 : 0.075)),
+  ...[7.75, 15.75, 23.75, 31.75].map((beat) => noise(beat, 0.08, 'woodTap', 0.09)),
 ];
 
 const officeEvents = [
-  ...chord(0, [53, 57, 62], 1.4, 'officePluck', 0.26),
-  ...chord(4, [52, 56, 62], 1.1, 'officePluck', 0.25),
-  ...chord(8, [50, 55, 59], 1.4, 'officePluck', 0.26),
-  ...chord(12, [52, 57, 60], 1.1, 'officePluck', 0.24),
-  ...[65, 69, 62, 67, 64, 71, 65, 60, 69, 64, 67, 62]
-    .map((pitch, index) => tone(index * 1.25 + (index % 4 === 3 ? 0.25 : 0), pitch, 0.24, 'paperPluck', 0.28)),
-  ...[41, 40, 38, 40].map((pitch, index) => tone(index * 4, pitch, 0.46, 'officeBass', 0.27)),
+  ...chord(0, [53, 57, 62], 0.52, 'pizzicato', 0.25),
+  ...chord(4.25, [52, 56, 62], 0.48, 'pizzicato', 0.24),
+  ...chord(8, [50, 55, 59], 0.52, 'pizzicato', 0.25),
+  ...chord(12.5, [52, 57, 60], 0.48, 'pizzicato', 0.23),
+  ...[
+    [1.25, 65], [2.75, 69], [5.5, 62], [6.75, 67],
+    [9.25, 64], [10.75, 71], [13.5, 65], [14.85, 60],
+  ].map(([beat, pitch], index) => tone(beat, pitch, index % 3 === 1 ? 0.52 : 0.36, 'mutedWoodwind', 0.18)),
+  ...[41, 40, 38, 40].map((pitch, index) => tone(index * 4 + (index === 3 ? 0.25 : 0), pitch, 0.46, 'officeBass', 0.24)),
   ...[1.75, 3.5, 5.75, 7.5, 9.75, 11.5, 13.75, 15.5]
-    .map((beat, index) => noise(beat, 0.08, index % 2 ? 'deskTickSoft' : 'deskTick', 0.18)),
+    .map((beat, index) => noise(beat, 0.08, index % 2 ? 'deskTickSoft' : 'deskTick', 0.15)),
 ];
 
 const companionEvents = [
@@ -50,7 +57,8 @@ const companionEvents = [
   ...chord(8, [45, 52, 60], 7.5, 'glassPad', 0.17),
   ...chord(16, [50, 57, 64], 7.5, 'glassPad', 0.18),
   ...chord(24, [47, 54, 62], 7.5, 'glassPad', 0.17),
-  ...[72, 67, 69, 64].map((pitch, index) => tone(3.5 + index * 8, pitch, 1.6, 'companionGlow', 0.2)),
+  ...[72, 67, 69, 64].map((pitch, index) => tone(3.5 + index * 8, pitch, 1.6, 'softBell', 0.18)),
+  ...[60, 62, 67, 64].map((pitch, index) => tone(1.5 + index * 8, pitch, 2.2, 'companionGlow', 0.11)),
   noise(0, 7.8, 'airWash', 0.09),
   noise(8, 7.8, 'airWash', 0.08),
   noise(16, 7.8, 'airWash', 0.09),
@@ -79,7 +87,7 @@ export const TRACK_DEFINITIONS = deepFreeze({
     label: 'Cozy exploration',
     channel: 'music',
     slot: 'music-main',
-    bpm: 78,
+    bpm: 90,
     beatsPerBar: 4,
     loopBars: 8,
     events: cozyEvents,

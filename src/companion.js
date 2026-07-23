@@ -26,7 +26,7 @@ function element(tag, className, text) {
 }
 
 export class CompanionPanel {
-  constructor({ onClose } = {}) {
+  constructor({ onClose, onAudioEvent } = {}) {
     this.root = document.getElementById('companion');
     this.window = this.root.querySelector('.companion-window');
     this.messages = document.getElementById('companion-messages');
@@ -47,6 +47,7 @@ export class CompanionPanel {
     this.sessionPromise = null;
     this.progressQueue = Promise.resolve();
     this.onClose = onClose;
+    this.onAudioEvent = onAudioEvent;
     this.lastFocus = null;
 
     this.form.addEventListener('submit', (event) => {
@@ -65,6 +66,7 @@ export class CompanionPanel {
     for (const suggestion of this.root.querySelectorAll('[data-suggestion]')) {
       suggestion.addEventListener('click', () => {
         this.#setMode('ask');
+        this.onAudioEvent?.('ui-select', { gain: 0.45 });
         this.input.value = suggestion.dataset.suggestion;
         this.#updateCount();
         this.input.focus();
@@ -93,6 +95,7 @@ export class CompanionPanel {
     this.lastFocus = document.activeElement;
     this.root.classList.remove('hidden');
     this.root.setAttribute('aria-hidden', 'false');
+    this.onAudioEvent?.('companion-open');
     this.input.focus();
     this.#ensureSession()
       .then(() => this.recordProgress('discover_companion'))
@@ -112,6 +115,7 @@ export class CompanionPanel {
     this.root.setAttribute('aria-hidden', 'true');
     const returnTarget = this.lastFocus?.isConnected ? this.lastFocus : document.querySelector('canvas');
     returnTarget?.focus?.();
+    this.onAudioEvent?.('companion-close');
     this.onClose?.();
   }
 
@@ -168,7 +172,9 @@ export class CompanionPanel {
 
   #setMode(mode) {
     if (!['ask', 'letter'].includes(mode)) return;
+    const changed = this.mode !== mode;
     this.mode = mode;
+    if (changed) this.onAudioEvent?.('ui-select', { gain: 0.42 });
     for (const tab of this.tabs) {
       const selected = tab.dataset.mode === mode;
       tab.setAttribute('aria-selected', String(selected));
@@ -227,6 +233,7 @@ export class CompanionPanel {
     if (this.loading) return;
     const input = this.input.value;
     if (!input.trim()) {
+      this.onAudioEvent?.('locked-feedback', { gain: 0.5 });
       this.input.focus();
       return;
     }
@@ -238,6 +245,7 @@ export class CompanionPanel {
     this.loading = true;
     this.submit.disabled = true;
     this.abortController = new AbortController();
+    this.onAudioEvent?.('companion-thinking');
     const loadingMessage = this.#appendLoading(mode);
 
     try {
@@ -277,6 +285,7 @@ export class CompanionPanel {
   }
 
   #appendAnswer(payload) {
+    this.onAudioEvent?.(payload.type === 'locked' ? 'companion-locked' : 'companion-answer');
     const article = element('article', `companion-message companion-message-assistant response-${payload.type}`);
     article.append(element('div', 'message-kicker', payload.type === 'locked' ? 'SEALED FILE' : 'MARLENE · AMTS-EULE'));
     article.append(element('p', 'answer-copy', payload.answer));
@@ -332,6 +341,7 @@ export class CompanionPanel {
   }
 
   #appendError(message) {
+    this.onAudioEvent?.('companion-error');
     const article = element('article', 'companion-message companion-error');
     article.setAttribute('role', 'alert');
     article.append(element('div', 'message-kicker', 'RECORDS ROOM CLOSED'), element('p', '', message));

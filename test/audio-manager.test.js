@@ -133,14 +133,14 @@ test('AudioManager requires explicit unlock and manages buses, ducks, visibility
   assert.equal(context.gains[3].gain.value, 0.4);
 
   audio.setCompanionActive(true, { fadeSeconds: 0 });
-  assert.deepEqual(audio.getDuckingFactors(), { music: 0.22, ambience: 0.42, effects: 0.7 });
-  assert.ok(Math.abs(context.gains[1].gain.value - 0.65 * 0.22) < 1e-12);
-  assert.ok(Math.abs(context.gains[2].gain.value - 0.55 * 0.42) < 1e-12);
-  assert.ok(Math.abs(context.gains[3].gain.value - 0.4 * 0.7) < 1e-12);
+  assert.deepEqual(audio.getDuckingFactors(), { music: 0.4, ambience: 0.56, effects: 0.76 });
+  assert.ok(Math.abs(context.gains[1].gain.value - 0.65 * 0.4) < 1e-12);
+  assert.ok(Math.abs(context.gains[2].gain.value - 0.55 * 0.56) < 1e-12);
+  assert.ok(Math.abs(context.gains[3].gain.value - 0.4 * 0.76) < 1e-12);
   audio.setDialogueActive(true, { fadeSeconds: 0 });
-  assert.deepEqual(audio.getDuckingFactors(), { music: 0.22, ambience: 0.42, effects: 0.7 });
+  assert.deepEqual(audio.getDuckingFactors(), { music: 0.4, ambience: 0.56, effects: 0.76 });
   audio.setCompanionActive(false, { fadeSeconds: 0 });
-  assert.deepEqual(audio.getDuckingFactors(), { music: 0.32, ambience: 0.58, effects: 0.78 });
+  assert.deepEqual(audio.getDuckingFactors(), { music: 0.45, ambience: 0.66, effects: 0.82 });
 
   await audio.handleVisibilityChange(true);
   assert.equal(context.state, 'suspended');
@@ -150,9 +150,16 @@ test('AudioManager requires explicit unlock and manages buses, ducks, visibility
     reason: 'suspended',
     id: 'ui-confirm',
   }, 'hidden-tab effects are not queued to play later');
-  assert.equal(audio.playTrack('cozy-exploration', { fadeSeconds: 0 }).played, true);
-  assert.equal(audio.playTrack('bureaucracy-office', { fadeSeconds: 0 }).played, true);
+  assert.equal(audio.playTrack('cozy-exploration', { fadeSeconds: 0, level: 0.35 }).played, true);
+  assert.equal(audio.getTrackLevel('music-main'), 0.35);
+  assert.equal(audio.setTrackLevel('cozy-exploration', 0.22, { fadeSeconds: 0 }), true);
+  assert.equal(audio.getTrackLevel('music-main'), 0.22);
+  assert.equal(audio.playTrack('bureaucracy-office', { fadeSeconds: 0, level: 0.7 }).played, true);
   assert.equal(audio.getActiveTrack('music-main'), 'bureaucracy-office');
+  assert.deepEqual(audio.getDiagnostics().activeTracks['music-main'], {
+    id: 'bureaucracy-office',
+    level: 0.7,
+  });
   assert.equal(audio.stopTrack('music-main', { fadeSeconds: 0 }), true);
   assert.equal(audio.getActiveTrack('music-main'), null);
 

@@ -20,6 +20,11 @@ test('four original procedural tracks expose independent integration slots', () 
     'deadline-pressure',
   ]);
   assert.equal(TRACK_DEFINITIONS['cozy-exploration'].slot, 'music-main');
+  assert.equal(TRACK_DEFINITIONS['cozy-exploration'].bpm, 90);
+  assert.deepEqual(
+    new Set(TRACK_DEFINITIONS['cozy-exploration'].events.map((event) => event.voice)),
+    new Set(['softGuitar', 'clarinet', 'marimba', 'roundBass', 'folkBrush', 'woodTap'])
+  );
   assert.equal(TRACK_DEFINITIONS['bureaucracy-office'].slot, 'music-main');
   assert.equal(TRACK_DEFINITIONS['companion-calm'].channel, 'ambience');
   assert.equal(TRACK_DEFINITIONS['companion-calm'].slot, 'companion-ambience');
@@ -68,10 +73,12 @@ test('effect catalog covers gameplay and companion events with short bounded rec
     'footstep-grass', 'footstep-path', 'footstep-wood', 'footstep-tile',
     'paper-rustle', 'rubber-stamp', 'typewriter-tick',
     'interaction', 'ui-move', 'ui-confirm', 'ui-cancel', 'quest-unlock',
+    'quest-success', 'quest-failure', 'official-stamp',
     'locked', 'missing-document', 'door-open', 'door-close', 'mailbox',
     'slime', 'frustration', 'tree-vent',
     'companion-activation', 'companion-thinking', 'companion-answer', 'companion-error',
-    'environment-breeze', 'environment-bird', 'environment-room',
+    'environment-breeze', 'environment-bird', 'environment-bicycle',
+    'environment-traffic', 'environment-tram', 'environment-room',
   ];
   assert.deepEqual([...EFFECT_IDS].sort(), [...requiredIds].sort());
 

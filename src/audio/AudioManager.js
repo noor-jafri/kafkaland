@@ -210,23 +210,26 @@ export class AudioManager {
    * their declared slot; `deadline-pressure` therefore layers independently.
    * @returns {{played: boolean, reason?: string, id: string, slot?: string}}
    */
-  playTrack(id, { fadeSeconds = 1.2 } = {}) {
+  playTrack(id, { fadeSeconds = 1.2, level = 1 } = {}) {
     const definition = getTrackDefinition(id);
     if (!this._canPlay()) return { played: false, reason: 'locked', id: definition.id };
 
+    const targetLevel = clamp(level);
     const current = this._activeSlots.get(definition.slot);
     if (current?.definition.id === definition.id && current.stopAt == null) {
+      this.setTrackLevel(definition.slot, targetLevel, { fadeSeconds });
       return { played: true, reason: 'already-playing', id: definition.id, slot: definition.slot };
     }
 
     const now = this._context.currentTime;
     const duration = clamp(fadeSeconds, 0, 30);
     const gainNode = this._context.createGain();
-    gainNode.gain.setValueAtTime(duration > 0 ? 0 : 1, now);
+    gainNode.gain.setValueAtTime(duration > 0 ? 0 : targetLevel, now);
     gainNode.connect(this._channelBuses[definition.channel]);
     const session = {
       definition,
       gainNode,
+      level: targetLevel,
       originTime: now + 0.035,
       cursorSeconds: 0,
       stopAt: null,
@@ -235,7 +238,7 @@ export class AudioManager {
     this._activeSlots.set(definition.slot, session);
 
     if (current) this._beginTrackStop(current, now, duration);
-    this._rampParam(gainNode.gain, 1, duration);
+    this._rampParam(gainNode.gain, targetLevel, duration);
     this.update();
     return { played: true, id: definition.id, slot: definition.slot };
   }
@@ -262,9 +265,44 @@ export class AudioManager {
     for (const slot of slots) this.stopTrack(slot, options);
   }
 
+  /** Smoothly set one active track/slot level without restarting its loop. */
+  setTrackLevel(slotOrId, level, { fadeSeconds = 0.6 } = {}) {
+    if (!this._context) return false;
+    const session = this._activeSlots.get(slotOrId)
+      || [...this._activeSlots.values()].find((candidate) => candidate.definition.id === slotOrId);
+    if (!session || session.stopAt != null) return false;
+    session.level = clamp(level);
+    this._rampParam(session.gainNode.gain, session.level, fadeSeconds);
+    return true;
+  }
+
   /** Public ID of the active track in a slot, or null. */
   getActiveTrack(slot) {
     return this._activeSlots.get(slot)?.definition.id || null;
+  }
+
+  /** Current target gain of an active track/slot, or null. */
+  getTrackLevel(slotOrId) {
+    const session = this._activeSlots.get(slotOrId)
+      || [...this._activeSlots.values()].find((candidate) => candidate.definition.id === slotOrId);
+    return session?.level ?? null;
+  }
+
+  /** Serializable runtime state for settings UI, browser checks, and support. */
+  getDiagnostics() {
+    return {
+      unlocked: this.unlocked,
+      state: this.state,
+      preferences: this.getPreferences(),
+      ducking: this.getDuckingFactors(),
+      activeTracks: Object.fromEntries(
+        [...this._activeSlots.entries()].map(([slot, session]) => [slot, {
+          id: session.definition.id,
+          level: session.level,
+        }])
+      ),
+      activeSessionCount: this._sessions.size,
+    };
   }
 
   /**
@@ -414,6 +452,7 @@ export class AudioManager {
 
   _beginTrackStop(session, now, fadeSeconds) {
     if (session.stopAt != null && session.stopAt <= now + fadeSeconds) return;
+    session.level = 0;
     session.stopAt = now + fadeSeconds;
     this._rampParam(session.gainNode.gain, 0, fadeSeconds);
     if (fadeSeconds === 0) this._removeSession(session);

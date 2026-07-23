@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { CAMERA_ZOOM, INTERACT_RADIUS, FRUSTRATION, DAY_TIMER } from './config.js';
 import { loadAll } from './textures.js';
-import { buildWorld } from './world.js';
+import { buildWorld, surfaceAt } from './world.js';
 import { Player } from './player.js';
 import { HUD } from './ui.js';
 import { Screens } from './screens.js';
 import { CompanionPanel } from './companion.js';
+import { GameAudio } from './audio/game-audio.js';
+import { AudioSettingsPanel } from './audio/settings.js';
 import { buildSlimes } from './enemies.js';
 import { Nag } from './nag.js';
 import { wasPressed, endFrame } from './input.js';
@@ -52,18 +54,25 @@ async function start() {
   resize();
   window.addEventListener('resize', resize);
 
+  const gameAudio = new GameAudio();
+  gameAudio.installGestureUnlock();
+  const audioSettings = new AudioSettingsPanel(gameAudio);
+
   const textures = await loadAll();
   const world = buildWorld(scene, textures);
   const player = new Player(scene, textures, world.playerStart);
   const hud = new HUD();
-  const companion = new CompanionPanel();
+  const companion = new CompanionPanel({ onAudioEvent: (name, detail) => gameAudio.emit(name, detail) });
   const slimes = buildSlimes(scene, textures, world.slimeSpawns);
   const nag = new Nag(scene);
 
   let started = false;
   const screens = new Screens({
+    onAudioEvent: (name, detail) => gameAudio.emit(name, detail),
     onStart: () => {
       started = true;
+      gameAudio.startGame();
+      gameAudio.setDeadlineProgress(1, DAY_TIMER.deadlineDay);
       hud.setObjective('🎯 Anmeldung: find a flat, then bring your passport + documents to the Bürgeramt.');
       hud.setDay(1, DAY_TIMER.deadlineDay);
       hud.setFrustration(0, FRUSTRATION.max);
@@ -72,10 +81,25 @@ async function start() {
     },
   });
 
-  nag.onSpawn = () => hud.toast('📮 ' + NAG_LINES.spawn);
+  nag.onSpawn = () => {
+    gameAudio.emit('mail-delivery');
+    hud.toast('📮 ' + NAG_LINES.spawn);
+  };
   nag.onLeave = (m) => hud.toast('📮 ' + m);
 
-  window.__game = { player, camera, world, screens, companion }; // debug handle
+  window.__game = {
+    player,
+    camera,
+    world,
+    screens,
+    companion,
+    audio: gameAudio,
+    audioSettings,
+  }; // debug handle
+  window.addEventListener('beforeunload', () => {
+    audioSettings.dispose();
+    gameAudio.dispose();
+  }, { once: true });
 
   camera.position.x = player.pos.x;
   camera.position.y = player.pos.y;
@@ -96,6 +120,7 @@ async function start() {
 
   function addFrustration(amount) {
     frustration = Math.min(FRUSTRATION.max, frustration + amount);
+    gameAudio.emit('frustration-increase');
     if (!ventHintShown) {
       ventHintShown = true;
       hud.toast('😤 Frustration rising. Find a tree and press F to vent.');
@@ -113,6 +138,7 @@ async function start() {
   function collect(item) {
     item.collected = true;
     item.mesh.removeFromParent();
+    gameAudio.emit('document-pickup');
     hud.addItem(item);
     if (item.fact) screens.queueFact(item.fact);
   }
@@ -121,12 +147,15 @@ async function start() {
     if (npc.id === 'companion') {
       companion.open();
     } else if (npc.id === 'hostel') {
+      gameAudio.emit('building-enter');
       screens.startDialogue(DIALOGUES.hostel.speaker, DIALOGUES.hostel.lines);
     } else if (npc.id === 'apartment') {
       if (flatClaimed) {
+        gameAudio.emit('npc-interaction');
         hud.toast('🏠 The flat is already yours. Off to the Bürgeramt!');
         return;
       }
+      gameAudio.emit('building-enter');
       const d = DIALOGUES.apartment;
       screens.startDialogue(d.speaker, d.lines, () => {
         flatClaimed = true;
@@ -135,9 +164,11 @@ async function start() {
       });
     } else if (npc.goal) {
       const hasAll = REQUIRED_FOR_ANMELDUNG.every((id) => hud.hasItem(id));
+      gameAudio.emit('building-enter');
       if (hasAll) {
         const d = DIALOGUES.buergeramt_complete;
         screens.startDialogue(d.speaker, d.lines, () => {
+          gameAudio.emit('rubber-stamp');
           grantItems(d.grants); // queues the Meldebescheinigung fact card
           registered = true;
           companion.recordProgress('complete_level_1');
@@ -145,6 +176,8 @@ async function start() {
           hud.setObjective('✅ Registered! You are official in Nuremberg.');
         });
       } else {
+        gameAudio.emit('missing-document');
+        gameAudio.emit('quest-failure', { gain: 0.55 });
         const d = DIALOGUES.buergeramt_incomplete;
         screens.startDialogue(d.speaker, d.lines);
       }
@@ -186,8 +219,8 @@ async function start() {
 
     // Screens own input while any overlay/menu is up. Capture that BEFORE updating
     // them, so the frame an overlay closes doesn't also trigger a world action.
-    const wasBlocking = screens.blocking() || companion.isOpen();
-    if (!companion.isOpen()) screens.update();
+    const wasBlocking = screens.blocking() || companion.isOpen() || audioSettings.isOpen();
+    if (!companion.isOpen() && !audioSettings.isOpen()) screens.update();
 
     // Show the win screen once the final Meldebescheinigung fact card is dismissed.
     if (pendingWin && !screens.blocking()) {
@@ -219,6 +252,7 @@ async function start() {
       if (day !== curDay) {
         curDay = day;
         hud.setDay(curDay, DAY_TIMER.deadlineDay);
+        gameAudio.setDeadlineProgress(curDay, DAY_TIMER.deadlineDay);
         if (curDay > DAY_TIMER.deadlineDay && !lateWarned) {
           lateWarned = true;
           hud.toast('⚠️ Past the 14-day deadline! (Small fine — but Nuremberg lets it slide. Keep going.)');
@@ -233,6 +267,7 @@ async function start() {
           const d = Math.hypot(s.pos.x - player.pos.x, s.pos.y - player.pos.y);
           if (d < 16) {
             hitCooldown = FRUSTRATION.hitCooldown;
+            gameAudio.emit('slime-collision');
             addFrustration(FRUSTRATION.perSlimeHit);
             hud.toast('🟢 Red tape! Conflicting information! (+frustration)');
           }
@@ -258,6 +293,7 @@ async function start() {
       const tree = nearestTree();
       if (tree && wasPressed('KeyF') && !player.punching) {
         player.vent();
+        gameAudio.emit('tree-vent');
         frustration = Math.max(0, frustration - FRUSTRATION.ventDrain);
         hud.setFrustration(frustration, FRUSTRATION.max);
         hud.toast(VENT_LINES[Math.floor(Math.random() * VENT_LINES.length)]);
@@ -291,6 +327,7 @@ async function start() {
 
       if (wasPressed('KeyE')) {
         if (nag.isNear(player)) {
+          gameAudio.emit('paper-rustle');
           nag.despawn(NAG_LINES.paid);
           screens.queueFact('rundfunk');
         } else {
@@ -302,6 +339,16 @@ async function start() {
     } else {
       hud.showPrompt(null);
     }
+
+    gameAudio.update(dt, {
+      active: started && !frozen && !registered,
+      moving: player.moving,
+      surface: surfaceAt(world, player.pos.x, player.pos.y),
+      slimeNearby: slimes.some((slime) => Math.hypot(
+        slime.pos.x - player.pos.x,
+        slime.pos.y - player.pos.y
+      ) < 120),
+    });
 
     renderer.render(scene, camera);
     endFrame();

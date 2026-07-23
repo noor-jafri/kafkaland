@@ -5,9 +5,9 @@ import {
 } from './index.js';
 
 const TRACK_PRESENTATION = Object.freeze({
-  'cozy-exploration': { number: 'A1', detail: 'Warm pads and felt-like plucks', icon: '⌂' },
-  'bureaucracy-office': { number: 'A2', detail: 'Paper pulse with an orderly bounce', icon: '▤' },
-  'companion-calm': { number: 'B1', detail: 'Slow glass tones and a soft air bed', icon: '✦' },
+  'cozy-exploration': { number: 'A1', detail: '90 BPM guitar, clarinet, marimba, warm bass', icon: '⌂' },
+  'bureaucracy-office': { number: 'A2', detail: 'Pizzicato, muted woodwind, awkward clock ticks', icon: '▤' },
+  'companion-calm': { number: 'B1', detail: 'Slow pads, soft bells, and a warm motif', icon: '✦' },
   'deadline-pressure': { number: 'C1', detail: 'Sparse low pulse, deliberately restrained', icon: '◷' },
 });
 
@@ -29,8 +29,9 @@ const EFFECT_GROUPS = Object.freeze([
   {
     title: 'Interface and quests', icon: '◇',
     effects: [
-      ['interaction', 'Interact'], ['ui-move', 'UI move'], ['ui-confirm', 'Confirm'],
-      ['ui-cancel', 'Cancel'], ['quest-unlock', 'Quest unlock'], ['locked', 'Locked'],
+      ['interaction', 'Interact/open'], ['ui-move', 'UI select'], ['ui-confirm', 'Confirm'],
+      ['ui-cancel', 'Close/back'], ['quest-unlock', 'Quest unlock'], ['quest-success', 'Quest success'],
+      ['quest-failure', 'Quest failure'], ['official-stamp', 'Official stamp'], ['locked', 'Locked'],
       ['missing-document', 'Missing document'],
     ],
   },
@@ -51,7 +52,8 @@ const EFFECT_GROUPS = Object.freeze([
     title: 'Environmental accents', icon: '⌇',
     effects: [
       ['environment-breeze', 'Breeze'], ['environment-bird', 'Bird'],
-      ['environment-room', 'Office room'],
+      ['environment-bicycle', 'Bicycle'], ['environment-traffic', 'Traffic'],
+      ['environment-tram', 'Tram'], ['environment-room', 'Office room'],
     ],
   },
 ]);

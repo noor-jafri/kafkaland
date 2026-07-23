@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/src/companion.css" />
+    <link rel="stylesheet" href="/src/audio/settings.css" />
     <title>Kafkaland - Welcome to Nuremberg</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -262,6 +263,40 @@
               <p class="companion-privacy">No Kafkaland conversation storage · No locked files sent to the model · Sources shown with every grounded answer</p>
             </div>
           </form>
+        </section>
+      </div>
+
+      <button
+        id="audio-settings-toggle"
+        type="button"
+        aria-controls="audio-settings"
+        aria-expanded="false"
+        title="Audio settings (M)"
+      >Audio</button>
+
+      <div id="audio-settings" class="hidden" aria-hidden="true">
+        <div class="audio-settings-shade" aria-hidden="true"></div>
+        <section class="audio-settings-window" role="dialog" aria-modal="true" aria-labelledby="audio-settings-title">
+          <header class="audio-settings-header">
+            <div>
+              <div class="audio-settings-overline">KAFKALAND · SOUND AMT</div>
+              <h2 id="audio-settings-title">Audio settings</h2>
+            </div>
+            <button id="audio-settings-close" class="audio-settings-close" type="button" aria-label="Close audio settings">×</button>
+          </header>
+          <div class="audio-settings-body">
+            <div class="audio-status-row">
+              <p id="audio-status" role="status">Sound waits for your first click or key press.</p>
+              <button id="audio-enable" type="button">Enable audio</button>
+            </div>
+            <p class="audio-settings-intro">Four separately saved channels. Music makes room for dialogue automatically.</p>
+            <div id="audio-settings-mixer" aria-label="Audio channel volumes"></div>
+            <div class="audio-settings-actions">
+              <button id="audio-master-mute" type="button" aria-pressed="false">Mute all sound</button>
+              <button id="audio-reset" type="button">Reset quiet defaults</button>
+            </div>
+            <p class="audio-settings-hint">Tab moves between controls. Arrow keys adjust sliders. Esc or M closes.</p>
+          </div>
         </section>
       </div>
 

@@ -65,10 +65,20 @@ export const EFFECT_RECIPES = deepFreeze({
     ]],
   }),
   'typewriter-tick': recipe({
-    cooldownMs: 28, maxPolyphony: 4, pitchJitterCents: 70,
+    cooldownMs: 70, maxPolyphony: 2, pitchJitterCents: 70,
     variations: [
-      [tone(0, 0.045, 980, 0.037, { waveform: 'triangle', endFrequency: 650 }), noise(0, 0.028, 0.025, { filterType: 'highpass', filterFrequency: 3000 })],
-      [tone(0, 0.05, 820, 0.034, { waveform: 'triangle', endFrequency: 580 }), noise(0, 0.025, 0.023, { filterType: 'highpass', filterFrequency: 2700 })],
+      [
+        tone(0, 0.045, 980, 0.032, { waveform: 'triangle', endFrequency: 650 }),
+        tone(0.055, 0.045, 860, 0.028, { waveform: 'triangle', endFrequency: 610 }),
+        tone(0.115, 0.045, 940, 0.03, { waveform: 'triangle', endFrequency: 640 }),
+        noise(0.17, 0.035, 0.023, { filterType: 'highpass', filterFrequency: 2800 }),
+      ],
+      [
+        tone(0, 0.05, 820, 0.03, { waveform: 'triangle', endFrequency: 580 }),
+        tone(0.065, 0.045, 900, 0.027, { waveform: 'triangle', endFrequency: 620 }),
+        tone(0.125, 0.045, 780, 0.028, { waveform: 'triangle', endFrequency: 560 }),
+        noise(0.18, 0.03, 0.022, { filterType: 'highpass', filterFrequency: 2600 }),
+      ],
     ],
   }),
   interaction: recipe({
@@ -93,6 +103,32 @@ export const EFFECT_RECIPES = deepFreeze({
       tone(0, 0.38, 392, 0.06, { waveform: 'sine' }),
       tone(0.18, 0.42, 523.25, 0.058, { waveform: 'sine' }),
       tone(0.38, 0.52, 659.25, 0.052, { waveform: 'sine' }),
+    ]],
+  }),
+  'quest-success': recipe({
+    cooldownMs: 900, maxPolyphony: 1,
+    variations: [[
+      tone(0, 0.42, 392, 0.055, { waveform: 'triangle' }),
+      tone(0.2, 0.46, 493.88, 0.052, { waveform: 'triangle' }),
+      tone(0.4, 0.75, 587.33, 0.05, { waveform: 'sine' }),
+      tone(0.58, 0.8, 783.99, 0.035, { waveform: 'sine' }),
+    ]],
+  }),
+  'quest-failure': recipe({
+    cooldownMs: 650, maxPolyphony: 1,
+    variations: [[
+      tone(0, 0.3, 349.23, 0.052, { waveform: 'triangle' }),
+      tone(0.22, 0.36, 293.66, 0.05, { waveform: 'triangle' }),
+      tone(0.46, 0.5, 233.08, 0.046, { waveform: 'sine' }),
+    ]],
+  }),
+  'official-stamp': recipe({
+    cooldownMs: 700, maxPolyphony: 1,
+    variations: [[
+      noise(0, 0.06, 0.075, { filterType: 'lowpass', filterFrequency: 900 }),
+      tone(0, 0.2, 104, 0.12, { waveform: 'triangle', endFrequency: 64 }),
+      tone(0.2, 0.3, 392, 0.045, { waveform: 'sine' }),
+      tone(0.38, 0.48, 523.25, 0.042, { waveform: 'sine' }),
     ]],
   }),
   locked: recipe({
@@ -190,6 +226,28 @@ export const EFFECT_RECIPES = deepFreeze({
       [tone(0, 0.16, 1250, 0.018, { waveform: 'sine', endFrequency: 1520 }), tone(0.17, 0.2, 1390, 0.015, { waveform: 'sine', endFrequency: 1160 })],
       [tone(0, 0.18, 1120, 0.016, { waveform: 'sine', endFrequency: 1360 }), tone(0.2, 0.17, 1280, 0.014, { waveform: 'sine', endFrequency: 1040 })],
     ],
+  }),
+  'environment-bicycle': recipe({
+    channel: 'ambience', cooldownMs: 2600, maxPolyphony: 1, pitchJitterCents: 30,
+    variations: [[
+      tone(0, 0.3, 1120, 0.018, { waveform: 'sine', endFrequency: 980 }),
+      tone(0.22, 0.34, 1320, 0.014, { waveform: 'sine', endFrequency: 1080 }),
+    ]],
+  }),
+  'environment-traffic': recipe({
+    channel: 'ambience', cooldownMs: 4000, maxPolyphony: 1,
+    variations: [[
+      noise(0, 2.1, 0.015, { filterType: 'bandpass', filterFrequency: 230, endFilterFrequency: 520, q: 0.5 }),
+      tone(0.15, 1.75, 62, 0.009, { waveform: 'sine', endFrequency: 78 }),
+    ]],
+  }),
+  'environment-tram': recipe({
+    channel: 'ambience', cooldownMs: 5000, maxPolyphony: 1,
+    variations: [[
+      tone(0, 1.65, 72, 0.014, { waveform: 'sine', endFrequency: 54 }),
+      noise(0, 1.7, 0.012, { filterType: 'bandpass', filterFrequency: 410, endFilterFrequency: 190, q: 0.62 }),
+      tone(0.45, 0.48, 740, 0.012, { waveform: 'sine', endFrequency: 690 }),
+    ]],
   }),
   'environment-room': recipe({
     channel: 'ambience', cooldownMs: 1300, maxPolyphony: 1,
