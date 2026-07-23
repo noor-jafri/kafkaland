@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kafkaland — Willkommen in Nürnberg</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <div id="hud">
+        <div id="doc-counter">
+          <span class="doc-icon">📄</span>
+          <span id="doc-count">0</span> / <span id="doc-total">0</span>
+          <span class="doc-label">Unterlagen</span>
+        </div>
+        <div id="banner" class="hidden"></div>
+        <div id="hint">Use ← → (or A/D) to move, Space to jump</div>
+      </div>
+
+      <div id="intro-overlay">
+        <div class="panel">
+          <h1>Willkommen in Nürnberg</h1>
+          <p>
+            You've just arrived in the city, and before you can do anything else you need to
+            <strong>register your address</strong>. Naturally, the office wants a small mountain
+            of paperwork first.
+          </p>
+          <p>
+            Explore the street and collect every document scattered around the city, then report
+            to the <strong>Bürgeramt</strong> to submit them.
+          </p>
+          <p class="controls">← → move &nbsp;·&nbsp; Space jump</p>
+          <button id="start-btn">Start</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
