@@ -11,56 +11,199 @@
       #app { width: 100%; height: 100%; position: relative; }
       canvas { display: block; image-rendering: pixelated; }
 
-      /* ---------- HUD ---------- */
+      :root {
+        --parch: #e8d5a0;
+        --panel: rgba(20, 20, 30, 0.86);
+        --ink: #f3ecd8;
+      }
+
+      /* ---------- HUD (in-world overlays) ---------- */
       #hud {
         position: absolute; inset: 0; pointer-events: none;
-        font-family: "Courier New", monospace; color: #fff;
+        font-family: "Courier New", monospace; color: var(--ink);
         user-select: none;
       }
       #quest {
         position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-        background: rgba(20, 20, 30, 0.8); border: 2px solid #e8d5a0;
+        background: var(--panel); border: 2px solid var(--parch);
         border-radius: 6px; padding: 8px 18px; font-size: 14px;
         max-width: 70%; text-align: center;
       }
+      #day {
+        position: absolute; top: 14px; right: 16px;
+        background: var(--panel); border: 2px solid var(--parch);
+        border-radius: 6px; padding: 8px 12px; font-size: 13px;
+      }
+      #day .late { color: #ff8a6b; }
+      #frust {
+        position: absolute; top: 14px; left: 16px; width: 190px;
+        background: var(--panel); border: 2px solid var(--parch);
+        border-radius: 6px; padding: 6px 8px 8px;
+      }
+      #frust .lbl { font-size: 10px; letter-spacing: 1px; margin-bottom: 4px; opacity: 0.9; }
+      #frust .track { height: 12px; background: #33333f; border-radius: 6px; overflow: hidden; }
+      #frust-fill {
+        height: 100%; width: 0%;
+        background: linear-gradient(90deg, #6bbf59, #e8c65a 55%, #d9534f);
+        transition: width 0.15s linear;
+      }
+      #frust.maxed { animation: frustpulse 0.5s infinite alternate; }
+      @keyframes frustpulse {
+        from { border-color: var(--parch); }
+        to { border-color: #ff5b5b; box-shadow: 0 0 14px #ff5b5b88; }
+      }
       #hint {
         position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
-        background: rgba(20, 20, 30, 0.85); border: 1px solid #fff;
-        border-radius: 4px; padding: 5px 12px; font-size: 13px;
-        display: none;
+        background: rgba(20, 20, 30, 0.9); border: 1px solid #fff;
+        border-radius: 4px; padding: 6px 14px; font-size: 13px; display: none;
       }
       #backpack {
         position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
         display: flex; gap: 8px; padding: 10px;
-        background: rgba(20, 20, 30, 0.8); border: 2px solid #e8d5a0;
-        border-radius: 8px;
+        background: var(--panel); border: 2px solid var(--parch); border-radius: 8px;
       }
       .slot {
-        width: 52px; height: 52px; border: 2px solid #6b6b7a;
-        border-radius: 6px; background: rgba(60, 60, 75, 0.6);
-        display: flex; align-items: center; justify-content: center;
-        flex-direction: column; font-size: 22px; position: relative;
+        width: 52px; height: 52px; border: 2px solid #6b6b7a; border-radius: 6px;
+        background: rgba(60, 60, 75, 0.6); display: flex; align-items: center;
+        justify-content: center; flex-direction: column; font-size: 22px; position: relative;
       }
-      .slot.filled { border-color: #e8d5a0; background: rgba(90, 80, 50, 0.6); }
+      .slot.filled { border-color: var(--parch); background: rgba(90, 80, 50, 0.6); }
       .slot .label {
-        position: absolute; bottom: -18px; font-size: 9px; color: #e8d5a0;
-        white-space: nowrap;
+        position: absolute; bottom: -16px; font-size: 8px; color: var(--parch); white-space: nowrap;
       }
       #toast {
-        position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
-        background: rgba(40, 90, 40, 0.9); border: 2px solid #9be89b;
-        border-radius: 6px; padding: 6px 16px; font-size: 13px;
-        opacity: 0; transition: opacity 0.3s;
+        position: absolute; top: 66px; left: 50%; transform: translateX(-50%);
+        background: rgba(40, 60, 90, 0.94); border: 2px solid #9bc4e8;
+        border-radius: 6px; padding: 7px 16px; font-size: 13px; max-width: 74%;
+        text-align: center; opacity: 0; transition: opacity 0.3s; color: #fff;
       }
+
+      /* ---------- Dialogue ---------- */
+      #dialogue {
+        position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+        width: min(680px, 82%); background: var(--panel);
+        border: 3px solid var(--parch); border-radius: 10px; padding: 14px 18px;
+        font-family: "Courier New", monospace; color: var(--ink);
+      }
+      #dialogue .dlg-speaker {
+        color: var(--parch); font-weight: bold; font-size: 13px; margin-bottom: 6px;
+        text-transform: uppercase; letter-spacing: 1px;
+      }
+      #dialogue .dlg-text { font-size: 15px; line-height: 1.5; }
+      #dialogue .dlg-cont { text-align: right; margin-top: 8px; font-size: 12px; opacity: 0.7; }
+
+      /* ---------- Fact card ---------- */
+      #factcard {
+        position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+        width: min(620px, 82%); background: #f5f0dc; color: #2a2620;
+        border: 3px solid #b9a25c; border-radius: 10px; padding: 16px 20px;
+        font-family: "Courier New", monospace;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5); transform-origin: bottom center;
+        animation: stampIn 0.22s ease-out;
+      }
+      @keyframes stampIn {
+        from { transform: translateX(-50%) scale(1.25) rotate(-3deg); opacity: 0; }
+        to { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; }
+      }
+      #factcard .fc-tag {
+        font-size: 10px; letter-spacing: 1.5px; color: #9a7d2e;
+        text-transform: uppercase; border-bottom: 1px dashed #b9a25c; padding-bottom: 5px;
+      }
+      #factcard .fc-title { font-size: 18px; font-weight: bold; margin: 8px 0 6px; color: #6b3f10; }
+      #factcard .fc-body { font-size: 14px; line-height: 1.55; }
+      #factcard .fc-cont { text-align: right; margin-top: 10px; font-size: 12px; color: #9a7d2e; }
+
+      /* ---------- Codex ---------- */
+      #codex {
+        position: absolute; inset: 0; background: rgba(12, 12, 20, 0.92);
+        font-family: "Courier New", monospace; color: var(--ink);
+        display: flex; flex-direction: column; align-items: center; padding: 5vh 0;
+      }
+      #codex .codex-title { font-size: 22px; color: var(--parch); margin-bottom: 16px; }
+      #codex-list { width: min(720px, 88%); overflow-y: auto; }
+      #codex .cx-entry { border-left: 3px solid var(--parch); padding: 8px 14px; margin-bottom: 12px; background: rgba(255,255,255,0.04); }
+      #codex .cx-t { color: var(--parch); font-weight: bold; margin-bottom: 4px; }
+      #codex .cx-b { font-size: 13px; line-height: 1.5; }
+      #codex .cx-empty { opacity: 0.6; text-align: center; }
+      #codex .codex-hint { margin-top: 16px; font-size: 12px; opacity: 0.7; }
+
+      /* ---------- Full-screen screens (title / intro / howto / won) ---------- */
+      #screen {
+        position: absolute; inset: 0; z-index: 20;
+        background: radial-gradient(circle at 50% 35%, #2a3a55 0%, #141420 75%);
+        font-family: "Courier New", monospace; color: var(--ink);
+        display: flex; align-items: center; justify-content: center; text-align: center;
+      }
+      #screen-inner { width: min(860px, 92%); }
+      .title-logo {
+        font-size: 68px; font-weight: bold; letter-spacing: 6px; color: var(--parch);
+        text-shadow: 4px 4px 0 #000, 0 0 24px #e8d5a055;
+      }
+      .title-sub { font-size: 15px; opacity: 0.85; margin-top: 4px; }
+      .bunny-mark { font-size: 44px; margin: 22px 0; }
+      .menu { margin: 18px 0 10px; }
+      .menu-item { font-size: 18px; padding: 5px 0; opacity: 0.7; }
+      .menu-item.selected { opacity: 1; color: var(--parch); }
+      .menu-item.disabled { opacity: 0.35; font-style: italic; }
+      .foot { font-size: 12px; opacity: 0.6; margin-top: 14px; }
+      .big { font-size: 34px; color: var(--parch); margin-bottom: 8px; }
+      .sub { font-size: 15px; opacity: 0.9; margin-bottom: 14px; }
+      .intro-panel {
+        background: #f5f0dc; color: #2a2620; border: 3px solid #b9a25c; border-radius: 10px;
+        padding: 34px 28px; min-height: 150px; display: flex; align-items: center; justify-content: center;
+      }
+      .intro-text { font-size: 19px; line-height: 1.7; }
+      .dots { margin-top: 14px; letter-spacing: 6px; color: var(--parch); }
+      .howto-grid { display: flex; gap: 26px; text-align: left; margin: 12px 0; }
+      .howto-col { flex: 1; }
+      .howto-h { color: var(--parch); font-weight: bold; margin-bottom: 8px; font-size: 15px; }
+      table.controls { width: 100%; font-size: 13px; border-collapse: collapse; }
+      table.controls td { padding: 3px 4px; vertical-align: top; }
+      table.controls td.k { color: var(--parch); white-space: nowrap; padding-right: 12px; }
+      .howto-col .row { font-size: 12.5px; line-height: 1.5; margin-bottom: 6px; }
+      .roadmap {
+        font-size: 12px; background: rgba(0,0,0,0.35); border: 1px solid #4a4a60;
+        border-radius: 6px; padding: 10px; margin: 8px 0; letter-spacing: 0.5px;
+      }
+      .won-body { font-size: 15px; line-height: 1.6; margin: 10px auto; max-width: 560px; }
+      .won-col { margin: 12px 0; }
+      .won-h { color: var(--parch); font-size: 13px; margin-bottom: 6px; }
+      .won-col ul { list-style: none; font-size: 15px; line-height: 1.7; }
+      .hidden { display: none !important; }
     </style>
   </head>
   <body>
     <div id="app">
       <div id="hud">
-        <div id="quest">Willkommen in Nürnberg! Collect your documents scattered around town. (WASD to move, E to pick up)</div>
-        <div id="hint">Press <b>E</b> to pick up</div>
+        <div id="quest">Kafkaland</div>
+        <div id="day"></div>
+        <div id="frust"><div class="lbl">FRUSTRATION</div><div class="track"><div id="frust-fill"></div></div></div>
+        <div id="hint"></div>
         <div id="backpack"></div>
         <div id="toast"></div>
+      </div>
+
+      <div id="dialogue" class="hidden">
+        <div class="dlg-speaker"></div>
+        <div class="dlg-text"></div>
+        <div class="dlg-cont">▶ E / Space</div>
+      </div>
+
+      <div id="factcard" class="hidden">
+        <div class="fc-tag">📎 Fact Card · logged to your Codex</div>
+        <div class="fc-title"></div>
+        <div class="fc-body"></div>
+        <div class="fc-cont">E / Space to continue</div>
+      </div>
+
+      <div id="codex" class="hidden">
+        <div class="codex-title">📖 Codex — What You've Learned</div>
+        <div id="codex-list"></div>
+        <div class="codex-hint">C or Esc to close</div>
+      </div>
+
+      <div id="screen">
+        <div id="screen-inner"></div>
       </div>
     </div>
     <script type="module" src="/src/main.js"></script>

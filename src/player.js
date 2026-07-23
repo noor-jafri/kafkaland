@@ -16,7 +16,9 @@ export class Player {
     this.sheets = {
       idle: this.#makeSheet(textures.bunnyIdle, CHARACTER.idle),
       run: this.#makeSheet(textures.bunnyRun, CHARACTER.run),
+      punch: this.#makeSheet(textures.bunnyPunch, CHARACTER.punch),
     };
+    this.punchElapsed = Infinity; // >= punch duration means "not punching"
 
     this.material = new THREE.MeshBasicMaterial({
       map: this.sheets.idle.tex,
@@ -40,9 +42,18 @@ export class Player {
     return { tex, frames: anim.frames, fps: anim.fps, img: baseTex.image };
   }
 
-  update(dt, world) {
-    const move = getMoveVector();
-    this.moving = move.x !== 0 || move.y !== 0;
+  // Trigger a one-shot punch/vent animation (used by the Vent Mechanic).
+  vent() {
+    this.punchElapsed = 0;
+  }
+
+  get punching() {
+    return this.punchElapsed < CHARACTER.punch.frames / CHARACTER.punch.fps;
+  }
+
+  update(dt, world, frozen = false) {
+    const move = frozen ? { x: 0, y: 0 } : getMoveVector();
+    this.moving = !this.punching && (move.x !== 0 || move.y !== 0);
 
     if (this.moving) {
       // Facing: horizontal wins so side-run reads nicely on diagonals.
@@ -70,8 +81,15 @@ export class Player {
 
     // --- Animation ---
     this.animTime += dt;
-    const sheet = this.moving ? this.sheets.run : this.sheets.idle;
-    const frame = Math.floor(this.animTime * sheet.fps) % sheet.frames;
+    this.punchElapsed += dt;
+    let sheet, frame;
+    if (this.punching) {
+      sheet = this.sheets.punch;
+      frame = Math.min(sheet.frames - 1, Math.floor(this.punchElapsed * sheet.fps));
+    } else {
+      sheet = this.moving ? this.sheets.run : this.sheets.idle;
+      frame = Math.floor(this.animTime * sheet.fps) % sheet.frames;
+    }
     const row = CHARACTER.rows[this.facing];
     const size = CHARACTER.frameSize;
     sheet.tex.offset.set(

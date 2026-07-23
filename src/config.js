@@ -10,6 +10,8 @@ export const ASSETS = {
   shadow: '/assets/Sprites/Sprite_Shadow.png',
   bunnyIdle: '/assets/Sprites/Characters/Bunny/IDLE/Bunny_Idle.png',
   bunnyRun: '/assets/Sprites/Characters/Bunny/RUN/Bunny_Run.png',
+  bunnyPunch: '/assets/Sprites/Characters/Bunny/SWORD/Bunny_Sword.png',
+  slimeIdle: '/assets/Sprites/Enemies/SLIME/Slime_Idle.png',
 };
 
 // { x, y, w, h } regions inside the tileset images.
@@ -28,6 +30,16 @@ export const CHARACTER = {
   rows: { down: 0, up: 1, left: 2, right: 3 },
   idle: { frames: 5, fps: 6 },
   run: { frames: 8, fps: 12 },
+  punch: { frames: 9, fps: 16 }, // Bunny_Sword sheet, played once when venting
+};
+
+// Slime hazard: 48px frames, first row is fine for a simple bobbing patrol.
+export const SLIME = {
+  frameSize: 48,
+  idle: { frames: 8, fps: 6 },
+  speed: 22, // world px / second, patrols slowly
+  patrolRange: 40, // px it wanders left/right of its spawn
+  contactRadius: 16,
 };
 
 export const PLAYER = {
@@ -39,3 +51,28 @@ export const PLAYER = {
 };
 
 export const CAMERA_ZOOM = 3;
+
+export const INTERACT_RADIUS = 34; // how close you must be to interact (world px)
+
+// Frustration / Vent Mechanic tuning.
+export const FRUSTRATION = {
+  max: 100,
+  perSlimeHit: 22,
+  perNagCaught: 18,
+  ventDrain: 34, // drained per tree-punch
+  hitCooldown: 1.2, // seconds of invulnerability after a slime bump
+};
+
+// Cosmetic in-world clock for Level 1's soft 14-day Anmeldung deadline.
+export const DAY_TIMER = {
+  secondsPerDay: 7,
+  deadlineDay: 14,
+};
+
+// Rundfunkbeitrag Man (the recurring nag).
+export const NAG = {
+  firstDelay: 20, // seconds before he can first appear
+  interval: 55, // rough seconds between appearances
+  speed: 70, // slightly slower than the player (PLAYER.speed = 90)
+  catchRadius: 18,
+};

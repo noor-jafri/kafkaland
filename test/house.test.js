@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { ASSETS } from '../src/config.js';
+import { ASSETS, TILE } from '../src/config.js';
 import { HOUSE_ART, houseCenterXForEntrance } from '../src/house.js';
+import { BUILDINGS, MAP } from '../src/map.js';
 
 test('Craftpix runtime house matches its declared native render size', async () => {
   const png = await readFile(new URL('../assets/Craftpix/house.png', import.meta.url));
@@ -15,10 +16,22 @@ test('Craftpix runtime house matches its declared native render size', async () 
 });
 
 test('offset Craftpix door remains centered on every map entrance', () => {
-  for (const entranceX of [88, 216, 344, 488]) {
+  const buildingCells = [];
+  for (const [row, line] of MAP.entries()) {
+    for (const [column, character] of [...line].entries()) {
+      if (BUILDINGS[character]) buildingCells.push({ row, column });
+    }
+  }
+  assert.equal(buildingCells.length, Object.keys(BUILDINGS).length);
+
+  for (const { row, column } of buildingCells) {
+    const entranceX = column * TILE + TILE / 2;
     const meshCenterX = houseCenterXForEntrance(entranceX);
     const leftEdge = meshCenterX - HOUSE_ART.width / 2;
     assert.equal(leftEdge + HOUSE_ART.entranceCenterX, entranceX);
     assert.ok(Number.isInteger(leftEdge), 'house art remains aligned to whole world pixels');
+
+    const tileBottom = (MAP.length - 1 - row) * TILE;
+    assert.ok(tileBottom + HOUSE_ART.height - 2 <= MAP.length * TILE, 'roof stays inside the map');
   }
 });

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
-import { MAP, DOCUMENTS } from './map.js';
+import { MAP, DOCUMENTS, BUILDINGS } from './map.js';
 import { spriteMesh } from './textures.js';
 import { createHouseMesh, houseCenterXForEntrance } from './house.js';
 
@@ -18,6 +18,9 @@ export function buildWorld(scene, textures) {
 
   const blocked = new Set(); // 'col,row' cells that can't be walked into
   const items = []; // pickable documents
+  const npcs = []; // interactable buildings
+  const trees = []; // punchable-tree world positions (for the Vent Mechanic)
+  const slimeSpawns = []; // world positions where slimes patrol
   let playerStart = new THREE.Vector2(width / 2, height / 2);
 
   // --- Ground: one canvas with grass everywhere + dirt on path tiles ---
@@ -46,13 +49,11 @@ export function buildWorld(scene, textures) {
   ground.position.set(width / 2, height / 2, 0);
   scene.add(ground);
 
-  // --- Objects ---
-  const objectDefs = {
-    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1 },
-    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1 },
+  // --- Scenery objects ---
+  const sceneryDefs = {
+    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1, punchable: true },
+    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1, punchable: true },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
-    A: { house: true, blockRadius: 2 },
-    B: { house: true, blockRadius: 2 },
   };
 
   for (let r = 0; r < rows; r++) {
@@ -64,30 +65,40 @@ export function buildWorld(scene, textures) {
 
       if (ch === '@') {
         playerStart = new THREE.Vector2(worldX, worldY);
-      } else if (objectDefs[ch]) {
-        const def = objectDefs[ch];
-        const mesh = def.house
-          ? createHouseMesh(textures)
-          : spriteMesh(textures[def.tex], def.region, { scale: def.scale });
-        const h = mesh.geometry.parameters.height;
-        const meshX = def.house ? houseCenterXForEntrance(worldX) : worldX;
-        mesh.position.set(meshX, tileBottom + h / 2 - 2, depthForY(tileBottom));
+      } else if (sceneryDefs[ch]) {
+        const def = sceneryDefs[ch];
+        const mesh = spriteMesh(textures[def.tex], def.region, { scale: def.scale });
+        const h = def.region.h * def.scale;
+        mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         scene.add(mesh);
-        const blockRadius = def.blockRadius ?? 0;
-        for (let offset = -blockRadius; offset <= blockRadius; offset++) {
+        blocked.add(`${c},${r}`);
+        if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
+      } else if (BUILDINGS[ch]) {
+        const mesh = createHouseMesh(textures);
+        const h = mesh.geometry.parameters.height;
+        mesh.position.set(
+          houseCenterXForEntrance(worldX),
+          tileBottom + h / 2 - 2,
+          depthForY(tileBottom)
+        );
+        scene.add(mesh);
+        for (let offset = -2; offset <= 2; offset++) {
           blocked.add(`${c + offset},${r}`);
         }
+        npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
+      } else if (ch === 's') {
+        slimeSpawns.push({ x: worldX, y: worldY });
       } else if (DOCUMENTS[ch]) {
         const doc = DOCUMENTS[ch];
         const mesh = makeDocumentMesh();
         mesh.position.set(worldX, worldY, depthForY(tileBottom));
         scene.add(mesh);
-        items.push({ ...doc, mesh, baseY: worldY, collected: false });
+        items.push({ ...doc, mesh, baseY: worldY, x: worldX, collected: false });
       }
     }
   }
 
-  return { width, height, rows, cols, blocked, items, playerStart };
+  return { width, height, rows, cols, blocked, items, npcs, trees, slimeSpawns, playerStart };
 }
 
 // A little paper document, drawn on a canvas (no asset needed).
@@ -115,7 +126,7 @@ function makeDocumentMesh() {
   return mesh;
 }
 
-// AABB collision against blocked tiles. Returns corrected position.
+// AABB collision against blocked tiles. Returns true if the box hits a wall.
 export function resolveCollision(world, x, y, halfW, halfH) {
   const minC = Math.floor((x - halfW) / TILE);
   const maxC = Math.floor((x + halfW) / TILE);
