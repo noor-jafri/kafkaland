@@ -41,6 +41,24 @@ export class Screens {
     this.#pump();
   }
 
+  // Full-screen "here's this level's goal" card, shown before each level.
+  showLevelIntro(mission, onBegin) {
+    this.phase = 'levelintro';
+    this.overlay = null;
+    this.onIntroBegin = onBegin;
+    this.#hideAll();
+    const steps = mission.steps
+      .map((s, i) => `<div class="ls-step"><span class="ls-n">${i + 1}</span> ${s}</div>`)
+      .join('');
+    this.innerEl.innerHTML = `
+      <div class="ls-tag">${mission.tag}</div>
+      <div class="big" style="margin-top:6px">${mission.aim}</div>
+      <div class="ls-steps">${steps}</div>
+      <div class="menu"><div class="menu-item selected">▶ Start</div></div>
+      <div class="foot">E / Space to begin</div>`;
+    this.screenEl.classList.remove('hidden');
+  }
+
   startDialogue(speaker, lines, onDone) {
     this.dialogue = { speaker, lines, index: 0, onDone };
     this.overlay = 'dialogue';
@@ -104,6 +122,15 @@ export class Screens {
       if (confirm) this.#beginPlaying();
     } else if (this.phase === 'credits') {
       if (confirm || esc) this.#renderTitle();
+    } else if (this.phase === 'levelintro') {
+      if (confirm) {
+        const begin = this.onIntroBegin;
+        this.onIntroBegin = null;
+        this.phase = 'playing';
+        this.overlay = null;
+        this.screenEl.classList.add('hidden');
+        begin?.();
+      }
     } else if (this.phase === 'won') {
       if (confirm && this.onWonContinue) {
         const go = this.onWonContinue;

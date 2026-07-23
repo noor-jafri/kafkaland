@@ -14,40 +14,33 @@ const put = (c, r, ch) => { if (c > 0 && c < W - 1 && r > 0 && r < H - 1) g[r][c
 const hRun = (c0, c1, r, ch = 'T') => { for (let c = c0; c <= c1; c++) put(c, r, ch); };
 const vRun = (r0, r1, c, ch = 'T') => { for (let r = r0; r <= r1; r++) put(c, r, ch); };
 
-// --- Winding lanes: staggered comb walls hanging from top and bottom, each
-// leaving a gap so the field stays one connected space but the route snakes. ---
-vRun(1, 6, 8, 'T');            // wall down from top, gap below row 6
-vRun(11, 16, 12, 'T');         // wall up from bottom, gap above row 11
-vRun(1, 9, 16, 'P');           // pine comb from top, gap below row 9
-vRun(9, 16, 20, 'T');          // wall up from bottom, gap above row 9
-vRun(1, 7, 24, 'P');           // pine comb from top, gap below row 7
-vRun(10, 16, 28, 'T');         // wall up from bottom
-hRun(29, 34, 3, 'T');          // short hedge near the far-right offices
+// --- Light scenery only: a mostly open village with loose tree groves for
+// texture and a couple of short hedges. Nothing that walls off a region. ---
+for (const [c, r, ch] of [
+  [11, 2, 'T'], [12, 2, 'P'], [11, 3, 'P'],       // grove near hostel
+  [17, 6, 'T'], [18, 7, 'P'], [24, 3, 'T'],
+  [30, 6, 'P'], [31, 6, 'T'], [30, 7, 'P'],       // grove mid-right
+  [8, 11, 'T'], [9, 12, 'P'], [20, 13, 'R'],
+  [26, 14, 'P'], [27, 14, 'T'], [34, 9, 'R'], [14, 15, 'T'],
+]) put(c, r, ch);
 
-// --- Dead-end pocket (top-left) hiding the passport: a C of trees with a
-// single opening at the bottom, off the main route. ---
-hRun(2, 5, 11, 'T');           // pocket ceiling
-vRun(11, 15, 2, 'T');          // pocket left wall (col2 rows11-15) — but keep col1 lane open
-vRun(11, 14, 6, 'T');          // pocket right wall, opening at row15/col? -> gap at row15
-put(3, 14, 'R');               // a rock for flavor inside the mouth
+// --- Shallow nook (one tile deep) that hides the passport just off the path:
+// a little three-sided bracket you step into, not a maze. ---
+hRun(2, 4, 6, 'T');            // nook ceiling
+put(2, 7, 'T');               // one side post (open on the right → easy entry)
 
-// --- Second pocket (bottom-right) for the optional SIM. ---
-hRun(31, 36, 14, 'T');
-vRun(14, 16, 31, 'T');
-vRun(14, 15, 36, 'T');
-
-// Scatter a few island trees/rocks for texture (all isolated, safe).
-for (const [c, r, ch] of [[12, 4, 'T'], [13, 5, 'P'], [34, 8, 'T'], [33, 9, 'R'], [18, 14, 'R'], [22, 5, 'T'], [26, 12, 'P'], [10, 13, 'T']]) put(c, r, ch);
+// --- Optional SIM tucked behind a short hedge, bottom-right, quick detour. ---
+hRun(33, 35, 13, 'T');
+put(33, 14, 'T');
 
 // --- Features ---
-put(2, 8, '@');                // player start (left, mid)
+put(2, 9, '@');                // player start (left, mid)
 put(6, 3, 'H');                // hostel (flavor)  — row 3 keeps roof in-map
-put(22, 4, 'M');               // apartment (grants flat docs)
-put(33, 12, 'G');              // Bürgeramt (goal)
-put(3, 13, '1');               // passport — inside the top-left pocket
-put(34, 15, '2');              // SIM — inside the bottom-right pocket
-put(15, 8, 's');               // slime on the main lane (chokepoint)
-put(27, 9, 's');               // slime guarding the approach to the offices
+put(21, 4, 'M');               // apartment (grants flat docs)
+put(33, 11, 'G');              // Bürgeramt (goal)
+put(3, 7, '1');                // passport — in the shallow nook, near start
+put(35, 14, '2');              // SIM — behind the short hedge (optional)
+put(14, 9, 's');               // one slime loosely on the route
 
 // --- Verify reachability with building footprints blocked ---
 const BUILD = new Set(['H', 'M', 'G']);

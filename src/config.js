@@ -87,7 +87,7 @@ export const NAG = {
   firstDelay: 16, // seconds before he can first appear
   interval: 30, // rough seconds between appearances (was 55 — now near-constant pressure)
   refleeInterval: 18, // he comes back faster after giving up than after catching you
-  speed: 74, // still slightly slower than the player (PLAYER.speed = 90)
+  speed: 50, // slow, plodding menace — easily outrun (PLAYER.speed = 90)
   catchRadius: 20,
   giveUp: 24, // seconds of failing to catch you before he flees (was 10)
   trailReachRadius: 12, // how close to a trail point before advancing to the next

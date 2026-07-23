@@ -8,21 +8,21 @@
 export const MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'T......................................T',
-  'T.TTTT.......T.........................T',
-  'T..1.T.B.....T......T..................T',
-  'T....T.......T..b..............F.......T',
-  'T............T.........................T',
-  'T...TTTTTTTTT..PPPPPPPPPP..TTTTTTTTT...T',
+  'T.TTT..................................T',
+  'T..1T.R.............TP.................T',
+  'T......B.......................F.......T',
   'T......................................T',
-  'T.......R....s......K.......P..........T',
-  'T.@..............P.....................T',
-  'T............................b.........T',
-  'T...PPPPPPP..TTTTTTTTTT...PPPPPPPPPP...T',
-  'T........T....................T........T',
-  'T........T................s...T..TTTT..T',
-  'T........TT.............R.....T..T..T..T',
-  'T........T....................T..T.2T..T',
-  'T.............................T..T.....T',
+  'T.........PPPPPP........TTTTTT.........T',
+  'T......................................T',
+  'T.........................b......R.....T',
+  'T.@.....P....s...T.K...................T',
+  'T......................................T',
+  'T......................................T',
+  'T...........TTTTTT.....PPPPPP..........T',
+  'T.................................TTT..T',
+  'T.........P...................TP..T2...T',
+  'T......................................T',
+  'T......................................T',
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
 
@@ -40,6 +40,7 @@ export const GRANTED = {
 export const BUILDINGS = {
   B: {
     id: 'bank',
+    label: 'Bank',
     dialogue: 'bank',
     prompt: 'Enter the Bank',
     requires: ['antrag'],
@@ -50,6 +51,7 @@ export const BUILDINGS = {
   },
   K: {
     id: 'krankenkasse',
+    label: 'Krankenkasse',
     dialogue: 'krankenkasse',
     prompt: 'Enter the Krankenkasse',
     requires: ['iban'],
@@ -60,6 +62,7 @@ export const BUILDINGS = {
   },
   F: {
     id: 'finanzamt',
+    label: 'Finanzamt',
     goal: true,
     prompt: 'Enter the Finanzamt',
     completeDialogue: 'finanzamt_complete',
@@ -78,7 +81,23 @@ export const LEVEL2 = {
   granted: GRANTED,
   buildings: BUILDINGS,
   required: REQUIRED,
-  startObjective: '🎯 Set up your life: open a bank account (needs a Kontoantrag — it is hidden), then get insured, then register for tax.',
+  mission: {
+    tag: 'LEVEL 2 · MONEY, HEALTH, TAXES',
+    aim: 'Get banked, insured, and tax-registered.',
+    steps: [
+      'Grab the Kontoantrag (hidden), then open a Bank account.',
+      'Get insured at the Krankenkasse (needs your IBAN).',
+      'Register for tax at the Finanzamt (needs IBAN + Versichertenkarte).',
+    ],
+  },
+  checklist: [
+    { id: 'antrag', name: 'Kontoantrag' },
+    { id: 'iban', name: 'Girokonto (IBAN)' },
+    { id: 'versichertenkarte', name: 'Versichertenkarte' },
+    { id: 'steuerid', name: 'Steuer-ID' },
+    { id: 'passfoto', name: 'Passfoto', optional: true },
+  ],
+  startObjective: '🎯 Find the Kontoantrag (hidden), then open a Bank account.',
   startToast: '📄 Meldebescheinigung in hand, you set out again. → Bank first.',
   passportObjective: '🎯 You have the Kontoantrag. Open your account at the Bank (B).',
   passportItem: 'antrag', // which pickup advances the objective
@@ -86,8 +105,8 @@ export const LEVEL2 = {
     title: '✅ LEVEL 2 COMPLETE',
     sub: 'Bank account, health insurance, and a tax ID — you exist to the system now.',
     body: "IBAN, Versichertenkarte, Steuer-ID. The holy trinity of German adulthood. Next comes the final boss: the Ausländerbehörde.",
-    nextLabel: '▶ Continue to Level 3: The Ausländerbehörde (coming soon)',
-    hasNext: false,
+    nextLabel: '▶ Continue to Level 3: The Ausländerbehörde Gauntlet',
+    hasNext: true,
   },
 };
 

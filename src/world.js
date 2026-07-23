@@ -23,7 +23,7 @@ export function buildWorld(scene, textures, level) {
   const items = []; // pickable documents
   const npcs = []; // interactable buildings
   const trees = []; // punchable-tree world positions (for the Vent Mechanic)
-  const enemySpawns = { slime: [], bat: [] }; // world positions, keyed by kind
+  const enemySpawns = { slime: [], bat: [], conflict: [] }; // world positions, keyed by kind
   const trail = []; // breadcrumb of recent player positions (the Nag follows it)
   let playerStart = new THREE.Vector2(width / 2, height / 2);
 
@@ -85,20 +85,35 @@ export function buildWorld(scene, textures, level) {
       } else if (BUILDINGS[ch]) {
         const mesh = createHouseMesh(textures);
         const h = mesh.geometry.parameters.height;
-        mesh.position.set(
-          houseCenterXForEntrance(worldX),
-          tileBottom + h / 2 - 2,
-          depthForY(tileBottom)
-        );
+        const centerX = houseCenterXForEntrance(worldX);
+        mesh.position.set(centerX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         root.add(mesh);
         for (let offset = -2; offset <= 2; offset++) {
           blocked.add(`${c + offset},${r}`);
+        }
+        // A readable name banner floating just above the roof.
+        if (BUILDINGS[ch].label) {
+          const banner = makeLabelMesh(BUILDINGS[ch].label);
+          const roofTop = tileBottom + h - 2;
+          banner.position.set(centerX, roofTop + 7, depthForY(tileBottom) + 0.5);
+          root.add(banner);
         }
         npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
       } else if (ch === 's') {
         enemySpawns.slime.push({ x: worldX, y: worldY });
       } else if (ch === 'b') {
         enemySpawns.bat.push({ x: worldX, y: worldY });
+      } else if (ch === 'c') {
+        enemySpawns.conflict.push({ x: worldX, y: worldY });
+      } else if (ch === 'U') {
+        // The "Untätigkeit" mini-boss: a big, immovable case-worker blob.
+        const mesh = makeBossMesh();
+        mesh.position.set(worldX, worldY + 10, depthForY(worldY));
+        root.add(mesh);
+        const banner = makeLabelMesh('Untätigkeit');
+        banner.position.set(worldX, worldY + 34, depthForY(worldY) + 0.5);
+        root.add(banner);
+        npcs.push({ id: 'untaetigkeit', boss: true, prompt: 'Endure the case-worker', x: worldX, y: worldY, mesh });
       } else if (DOCUMENTS[ch]) {
         const doc = DOCUMENTS[ch];
         const mesh = makeDocumentMesh();
@@ -110,6 +125,68 @@ export function buildWorld(scene, textures, level) {
   }
 
   return { width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root };
+}
+
+// A crisp parchment name banner for a building, drawn on a canvas. Rendered at
+// 3x so the text stays sharp under the pixel-art NearestFilter at CAMERA_ZOOM.
+function makeLabelMesh(text) {
+  const S = 3; // supersample factor
+  const padX = 8 * S;
+  const fontPx = 11 * S;
+  const measure = document.createElement('canvas').getContext('2d');
+  measure.font = `bold ${fontPx}px "Courier New", monospace`;
+  const textW = Math.ceil(measure.measureText(text).width);
+  const c = document.createElement('canvas');
+  c.width = textW + padX * 2;
+  c.height = 20 * S;
+  const ctx = c.getContext('2d');
+  // parchment plate with border
+  ctx.fillStyle = 'rgba(20,20,30,0.9)';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#e8d5a0';
+  ctx.fillRect(1 * S, 1 * S, c.width - 2 * S, c.height - 2 * S);
+  ctx.fillStyle = '#2a2620';
+  ctx.font = `bold ${fontPx}px "Courier New", monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, c.width / 2, c.height / 2 + S);
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  const w = c.width / S;
+  const h = c.height / S;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+  );
+  return mesh;
+}
+
+// The Untätigkeit mini-boss: a large sour grey-green blob clutching a red stamp.
+function makeBossMesh() {
+  const c = document.createElement('canvas');
+  c.width = 40;
+  c.height = 40;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#5c6b4a'; // sickly bureaucratic green
+  ctx.beginPath();
+  ctx.ellipse(20, 24, 16, 13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#47543a';
+  ctx.fillRect(6, 24, 28, 8);
+  ctx.fillStyle = '#1c1c1c'; // scowling eyes
+  ctx.fillRect(13, 18, 4, 5);
+  ctx.fillRect(23, 18, 4, 5);
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(14, 28, 12, 2); // flat frown
+  ctx.fillStyle = '#b01818'; // red stamp held aloft
+  ctx.fillRect(28, 6, 9, 6);
+  ctx.fillStyle = '#7a1010';
+  ctx.fillRect(31, 12, 3, 6);
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  return new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
 }
 
 // A little paper document, drawn on a canvas (no asset needed).

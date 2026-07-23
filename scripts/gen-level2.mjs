@@ -10,30 +10,30 @@ const put = (c, r, ch) => { if (c > 0 && c < W - 1 && r > 0 && r < H - 1) g[r][c
 const hRun = (c0, c1, r, ch = 'T') => { for (let c = c0; c <= c1; c++) put(c, r, ch); };
 const vRun = (r0, r1, c, ch = 'T') => { for (let r = r0; r <= r1; r++) put(c, r, ch); };
 
-// Central hedge divider with staggered gaps — a small civic plaza feel.
-hRun(4, 12, 6, 'T'); hRun(15, 24, 6, 'P'); hRun(27, 35, 6, 'T');
-hRun(4, 10, 11, 'P'); hRun(13, 22, 11, 'T'); hRun(26, 35, 11, 'P');
-vRun(2, 5, 13, 'T'); vRun(12, 15, 9, 'T'); vRun(12, 16, 30, 'T');
+// Light civic-plaza scenery: two short broken hedges + scattered groves, all
+// with clear gaps so the plaza stays open and easy to cross.
+hRun(10, 15, 6, 'P'); hRun(24, 29, 6, 'T');
+hRun(12, 17, 12, 'T'); hRun(23, 28, 12, 'P');
+for (const [c, r, ch] of [
+  [6, 3, 'R'], [20, 3, 'T'], [21, 3, 'P'],
+  [8, 9, 'P'], [33, 8, 'R'], [17, 9, 'T'],
+  [10, 14, 'P'], [30, 14, 'T'], [31, 14, 'P'],
+]) put(c, r, ch);
 
-// Kontoantrag pocket (top-left C of trees, one opening downward).
-hRun(2, 5, 2, 'T'); vRun(2, 4, 5, 'T'); put(4, 2, 'T');
-// Passfoto pocket (bottom-right).
-hRun(33, 36, 13, 'T'); vRun(13, 16, 33, 'T'); vRun(14, 15, 36, 'T');
-
-// Island scatter.
-for (const [c, r, ch] of [[8, 8, 'R'], [20, 3, 'T'], [24, 14, 'R'], [17, 9, 'P'], [10, 14, 'T'], [28, 8, 'P']]) put(c, r, ch);
+// Kontoantrag in a shallow nook (top-left), a quick detour off the start.
+hRun(2, 4, 2, 'T'); put(4, 3, 'T');
+// Passfoto behind a short hedge (bottom-right), optional.
+hRun(34, 36, 13, 'T'); put(34, 14, 'T');
 
 // Features.
 put(2, 9, '@');       // start
-put(7, 3, 'B');       // Bank
-put(20, 8, 'K');      // Krankenkasse
+put(7, 4, 'B');       // Bank
+put(19, 9, 'K');      // Krankenkasse
 put(31, 4, 'F');      // Finanzamt (goal)
-put(3, 3, '1');       // Kontoantrag (in pocket)
-put(35, 15, '2');     // Passfoto (optional, in pocket)
-put(13, 8, 's');      // slime
-put(26, 13, 's');     // slime
-put(16, 4, 'b');      // bat
-put(29, 10, 'b');     // bat
+put(3, 3, '1');       // Kontoantrag (in nook)
+put(35, 14, '2');     // Passfoto (optional)
+put(13, 9, 's');      // slime
+put(26, 8, 'b');      // bat
 
 const BUILD = new Set(['B', 'K', 'F']);
 const blocked = new Set();

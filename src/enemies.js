@@ -109,5 +109,13 @@ export function buildEnemies(parent, textures, spawns = {}) {
   const enemies = [];
   for (const s of spawns.slime || []) enemies.push(new Slime(parent, textures.slimeIdle, s));
   for (const b of spawns.bat || []) enemies.push(new Bat(parent, b));
+  // "Conflicting information" slimes: look like slimes, but on contact trigger a
+  // comedic dialogue loop (handled in main.js) instead of only adding frustration.
+  for (const s of spawns.conflict || []) {
+    const e = new Slime(parent, textures.slimeIdle, s);
+    e.kind = 'conflict';
+    e.resolved = false;
+    enemies.push(e);
+  }
   return enemies;
 }
