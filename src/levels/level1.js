@@ -49,7 +49,7 @@ export const GRANTED = {
 // Building roles, keyed by map letter.
 //   requires / gateDialogue : hard-gate — refuse (show gateDialogue) until the
 //     player holds every `requires` item.
-//   claimOnce / claimedToast : one-shot NPCs (the flat is only rented once).
+//   claimOnce : one-shot NPCs (the flat is only rented once).
 //   nextObjective : objective text set after a successful interaction.
 //   goal + completeDialogue/incompleteDialogue : the level's delivery point.
 export const BUILDINGS = {
@@ -62,7 +62,6 @@ export const BUILDINGS = {
     requires: ['passport'],
     gateDialogue: 'apartment_needs_passport',
     claimOnce: true,
-    claimedToast: '🏠 The flat is already yours. Off to the Bürgeramt!',
     nextObjective: '🎯 Bring your passport + Mietvertrag + Wohnungsgeberbestätigung to the Bürgeramt.',
   },
   G: {
@@ -107,7 +106,6 @@ export const LEVEL1 = {
     { id: 'sim', name: 'Prepaid-SIM', optional: true },
   ],
   startObjective: '🎯 Find your Reisepass (it is hidden nearby).',
-  startToast: '🚆 You step off the train in Nuremberg. → Move with WASD.',
   passportObjective: '🎯 You have your passport. Now rent a flat — talk to the Landlord (M).',
   win: {
     title: '✅ LEVEL 1 COMPLETE',

@@ -98,6 +98,3 @@ export const TRAIL = {
   sampleInterval: 0.28, // seconds between recorded points
   maxPoints: 48,
 };
-
-// Frustration levels at which the "go vent on a tree" nudge re-appears (fraction of max).
-export const FRUSTRATION_PROMPTS = [0.4, 0.75, 0.95];

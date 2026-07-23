@@ -288,18 +288,3 @@ export const UNTAETIGKEIT = {
   ],
   giveUp: "Fine. FINE. Processed. Take it and go — before I locate another form.",
 };
-
-// The Collector barks (picked when he spawns / catches you). Menacing, but dry.
-export const NAG_LINES = {
-  spawn: 'EIN HAUSHALT… EIN BEITRAG. I can see your trail.',
-  caught: "Backdated. Itemized. Since your move-in date. There is no escape from the fee.",
-  paid: 'Danke schön. …I always come back.',
-  fled: 'You cannot outrun a public institution forever. …Bis bald.',
-};
-
-export const VENT_LINES = [
-  '*THWACK*  …okay, that helped a little.',
-  '*THWACK*  Take that, bureaucracy.',
-  '*THWACK*  The tree understands.',
-  '*THWACK*  A leaf falls. You feel seen.',
-];

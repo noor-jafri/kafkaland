@@ -116,7 +116,6 @@ export const LEVEL3 = {
     { id: 'arbeitsvertrag', name: 'Arbeitsvertrag' },
   ],
   startObjective: '🎯 Find the Fiktionsbescheinigung (hidden) before anything else.',
-  startToast: '🏢 The Ausländerbehörde. Three wings, endless queues. Deep breath.',
   passportObjective: '🎯 You are legal to wait now. Get your eAT at the Ausländerbehörde (A).',
   win: {
     title: '✅ LEVEL 3 COMPLETE',

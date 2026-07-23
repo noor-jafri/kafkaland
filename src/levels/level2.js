@@ -46,7 +46,6 @@ export const BUILDINGS = {
     requires: ['antrag'],
     gateDialogue: 'bank_needs_antrag',
     claimOnce: true,
-    claimedToast: '🏦 Your account is open. Next: health insurance (Krankenkasse).',
     nextObjective: '🎯 Take your IBAN to the Krankenkasse (K) to get insured.',
   },
   K: {
@@ -57,7 +56,6 @@ export const BUILDINGS = {
     requires: ['iban'],
     gateDialogue: 'krankenkasse_needs_iban',
     claimOnce: true,
-    claimedToast: '💳 You are insured. Last stop: the Finanzamt (F).',
     nextObjective: '🎯 Bring your IBAN + Versichertenkarte to the Finanzamt (F).',
   },
   F: {
@@ -103,7 +101,6 @@ export const LEVEL2 = {
     { id: 'passfoto', name: 'Passfoto', optional: true },
   ],
   startObjective: '🎯 Find the Kontoantrag (hidden), then open a Bank account.',
-  startToast: '📄 Meldebescheinigung in hand, you set out again. → Bank first.',
   passportObjective: '🎯 You have the Kontoantrag. Open your account at the Bank (B).',
   passportItem: 'antrag', // which pickup advances the objective
   win: {

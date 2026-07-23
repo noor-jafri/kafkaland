@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CAMERA_ZOOM, INTERACT_RADIUS, FRUSTRATION, FRUSTRATION_PROMPTS, DAY_TIMER, NAG, TRAIL } from './config.js';
+import { CAMERA_ZOOM, INTERACT_RADIUS, FRUSTRATION, DAY_TIMER, NAG, TRAIL } from './config.js';
 import { loadAll } from './textures.js';
 import { buildWorld, surfaceAt } from './world.js';
 import { Player } from './player.js';
@@ -11,7 +11,7 @@ import { AudioSettingsPanel } from './audio/settings.js';
 import { buildEnemies } from './enemies.js';
 import { Nag } from './nag.js';
 import { wasPressed, endFrame } from './input.js';
-import { DIALOGUES, NAG_LINES, VENT_LINES, CONFLICT_LINES, UNTAETIGKEIT } from './content.js';
+import { DIALOGUES, CONFLICT_LINES, UNTAETIGKEIT } from './content.js';
 import LEVEL1 from './levels/level1.js';
 import LEVEL2 from './levels/level2.js';
 import LEVEL3 from './levels/level3.js';
@@ -55,11 +55,7 @@ async function start() {
   const companion = new CompanionPanel({ onAudioEvent: (name, detail) => gameAudio.emit(name, detail) });
   const hudEl = document.getElementById('hud');
   const nag = new Nag(scene);
-  nag.onSpawn = () => {
-    gameAudio.emit('mail-delivery');
-    hud.toast('📮 ' + NAG_LINES.spawn);
-  };
-  nag.onLeave = (m) => hud.toast('📮 ' + m);
+  nag.onSpawn = () => gameAudio.emit('mail-delivery');
 
   // --- Per-run objects & state, (re)built each level ---
   let level, world, player, enemies;
@@ -68,10 +64,8 @@ async function start() {
   let hitCooldown = 0;
   let playTime = 0;
   let curDay = 1;
-  let lateWarned = false;
   let registered = false;
   let pendingWin = false;
-  let frustPromptIdx = 0;
   let trailTimer = 0;
   let claimed = new Set();
 
@@ -89,10 +83,8 @@ async function start() {
     hitCooldown = 0;
     playTime = 0;
     curDay = 1;
-    lateWarned = false;
     registered = false;
     pendingWin = false;
-    frustPromptIdx = 0;
     trailTimer = 0;
     claimed = new Set();
     nag.reset();
@@ -113,7 +105,6 @@ async function start() {
     hud.setDay(1, DAY_TIMER.deadlineDay);
     hud.setFrustration(0, FRUSTRATION.max);
     hud.setChecklist(level.checklist);
-    hud.toast(level.startToast);
   }
 
   const screens = new Screens({
@@ -165,11 +156,6 @@ async function start() {
   function addFrustration(amount) {
     frustration = Math.min(FRUSTRATION.max, frustration + amount);
     gameAudio.emit('frustration-increase');
-    const frac = frustration / FRUSTRATION.max;
-    while (frustPromptIdx < FRUSTRATION_PROMPTS.length && frac >= FRUSTRATION_PROMPTS[frustPromptIdx]) {
-      frustPromptIdx++;
-      hud.toast('😤 Frustration is high. Find a tree and press F to vent it out.');
-    }
   }
 
   function interactNpc(npc) {
@@ -224,10 +210,7 @@ async function start() {
       screens.startDialogue(g.speaker, g.lines);
       return;
     }
-    if (npc.claimOnce && claimed.has(npc.id)) {
-      hud.toast(npc.claimedToast);
-      return;
-    }
+    if (npc.claimOnce && claimed.has(npc.id)) return;
     gameAudio.emit('building-enter');
     const d = DIALOGUES[npc.dialogue];
     const onDone = d.grants
@@ -324,12 +307,6 @@ async function start() {
         curDay = day;
         hud.setDay(curDay, DAY_TIMER.deadlineDay);
         gameAudio.setDeadlineProgress(curDay, DAY_TIMER.deadlineDay);
-        // Holding a Fiktionsbescheinigung suspends the deadline pressure (its
-        // whole real-world purpose — it keeps your stay legal while you wait).
-        if (curDay > DAY_TIMER.deadlineDay && !lateWarned && !hud.hasItem('fiktionsbescheinigung')) {
-          lateWarned = true;
-          hud.toast('⚠️ Past the 14-day deadline! (Small fine — but Nuremberg lets it slide. Keep going.)');
-        }
       }
 
       // Record a breadcrumb trail for the Nag to follow.
@@ -357,9 +334,6 @@ async function start() {
           hitCooldown = FRUSTRATION.hitCooldown;
           gameAudio.emit('slime-collision');
           addFrustration(FRUSTRATION.perSlimeHit);
-          hud.toast(e.kind === 'bat'
-            ? '🦇 Processing delay! Your file drops to the bottom of the pile. (+frustration)'
-            : '🟢 Red tape! Conflicting information! (+frustration)');
         }
       }
 
@@ -367,17 +341,14 @@ async function start() {
       const nagResult = nag.update(dt, world, player, false);
       if (nagResult === 'caught') {
         addFrustration(FRUSTRATION.perNagCaught);
-        hud.toast('📮 ' + NAG_LINES.caught);
         screens.queueFact('rundfunk');
         nag.despawn();
       } else if (nagResult === 'fled') {
-        nag.despawn(NAG_LINES.fled, true);
+        nag.despawn(undefined, true);
       }
 
-      // Passive frustration decay (re-arms the vent prompts as you calm down).
+      // Passive frustration decay.
       frustration = Math.max(0, frustration - 4 * dt);
-      const frac = frustration / FRUSTRATION.max;
-      while (frustPromptIdx > 0 && frac < FRUSTRATION_PROMPTS[frustPromptIdx - 1]) frustPromptIdx--;
       hud.setFrustration(frustration, FRUSTRATION.max);
 
       // Vent: punch a nearby tree with F.
@@ -387,7 +358,6 @@ async function start() {
         gameAudio.emit('tree-vent');
         frustration = Math.max(0, frustration - FRUSTRATION.ventDrain);
         hud.setFrustration(frustration, FRUSTRATION.max);
-        hud.toast(VENT_LINES[Math.floor(Math.random() * VENT_LINES.length)]);
         tree.mesh.position.x += 1.5; // tiny nudge; eased back below
         tree._shake = 0.25;
       }
@@ -417,7 +387,7 @@ async function start() {
       if (wasPressed('KeyE')) {
         if (nag.isNear(player)) {
           gameAudio.emit('paper-rustle');
-          nag.despawn(NAG_LINES.paid);
+          nag.despawn();
           screens.queueFact('rundfunk');
         } else {
           const target = nearestTarget();

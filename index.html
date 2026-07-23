@@ -102,13 +102,6 @@
       .slot .label {
         position: absolute; bottom: -16px; font-size: 8px; color: var(--parch); white-space: nowrap;
       }
-      #toast {
-        position: absolute; top: 66px; left: 50%; transform: translateX(-50%);
-        background: rgba(40, 60, 90, 0.94); border: 2px solid #9bc4e8;
-        border-radius: 6px; padding: 8px 18px; font-size: 15px; max-width: 74%;
-        text-align: center; opacity: 0; transition: opacity 0.3s; color: #fff;
-      }
-
       /* ---------- Dialogue ---------- */
       #dialogue {
         position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
@@ -215,7 +208,6 @@
         #frust { top: 8px; left: 8px; width: 190px; }
         #day { top: 8px; right: 8px; }
         #quest { top: 58px; max-width: calc(100% - 24px); font-size: 12px; padding: 7px 10px; }
-        #toast { top: 114px; max-width: calc(100% - 24px); }
       }
       .hidden { display: none !important; }
     </style>
@@ -229,7 +221,6 @@
         <div id="frust"><div class="lbl">FRUSTRATION</div><div class="track"><div id="frust-fill"></div></div></div>
         <div id="hint"></div>
         <div id="backpack"></div>
-        <div id="toast"></div>
       </div>
 
       <div id="dialogue" class="hidden">

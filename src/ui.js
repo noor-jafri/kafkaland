@@ -1,12 +1,11 @@
 import { BACKPACK_SLOTS } from './config.js';
 
 // DOM-based HUD: objective, backpack, contextual prompt, frustration meter,
-// day counter, and toast messages.
+// and day counter.
 export class HUD {
   constructor() {
     this.backpackEl = document.getElementById('backpack');
     this.hintEl = document.getElementById('hint');
-    this.toastEl = document.getElementById('toast');
     this.questEl = document.getElementById('quest');
     this.questMissionEl = this.questEl.querySelector('.q-mission');
     this.questObjEl = this.questEl.querySelector('.q-obj');
@@ -40,7 +39,6 @@ export class HUD {
   addItem(item) {
     this.items.push(item);
     this.#renderSlots();
-    this.toast(`${item.icon} ${item.name} added to backpack!`);
   }
 
   hasItem(id) {
@@ -120,12 +118,5 @@ export class HUD {
     this.frustFillEl.style.width = `${pct * 100}%`;
     this.frustWrapEl.classList.toggle('high', pct >= 0.6 && pct < 1);
     this.frustWrapEl.classList.toggle('maxed', pct >= 1);
-  }
-
-  toast(msg, ms = 2400) {
-    this.toastEl.textContent = msg;
-    this.toastEl.style.opacity = '1';
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => (this.toastEl.style.opacity = '0'), ms);
   }
 }
