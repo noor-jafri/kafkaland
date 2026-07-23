@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
-import { MAP, DOCUMENTS } from './map.js';
+import { MAP, DOCUMENTS, BUILDINGS } from './map.js';
 import { spriteMesh } from './textures.js';
 
 // Painter's sort for the top-down view: things lower on screen render on top.
@@ -17,6 +17,9 @@ export function buildWorld(scene, textures) {
 
   const blocked = new Set(); // 'col,row' cells that can't be walked into
   const items = []; // pickable documents
+  const npcs = []; // interactable buildings
+  const trees = []; // punchable-tree world positions (for the Vent Mechanic)
+  const slimeSpawns = []; // world positions where slimes patrol
   let playerStart = new THREE.Vector2(width / 2, height / 2);
 
   // --- Ground: one canvas with grass everywhere + dirt on path tiles ---
@@ -45,13 +48,17 @@ export function buildWorld(scene, textures) {
   ground.position.set(width / 2, height / 2, 0);
   scene.add(ground);
 
-  // --- Objects ---
-  const objectDefs = {
-    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1 },
-    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1 },
+  // --- Scenery objects ---
+  const sceneryDefs = {
+    T: { tex: 'natureTileset', region: REGIONS.tree, scale: 1, punchable: true },
+    P: { tex: 'natureTileset', region: REGIONS.pine, scale: 1, punchable: true },
     R: { tex: 'natureTileset', region: REGIONS.rock, scale: 1 },
-    A: { tex: 'houseTileset', region: REGIONS.shopRedA, scale: 3 },
-    B: { tex: 'houseTileset', region: REGIONS.shopRedB, scale: 3 },
+  };
+  // Buildings: art is reused; role comes from map.js BUILDINGS.
+  const buildingArt = {
+    H: REGIONS.shopRedA,
+    M: REGIONS.shopRedA,
+    G: REGIONS.shopRedB, // Bürgeramt gets the distinct pointed-roof front
   };
 
   for (let r = 0; r < rows; r++) {
@@ -63,29 +70,39 @@ export function buildWorld(scene, textures) {
 
       if (ch === '@') {
         playerStart = new THREE.Vector2(worldX, worldY);
-      } else if (objectDefs[ch]) {
-        const def = objectDefs[ch];
+      } else if (sceneryDefs[ch]) {
+        const def = sceneryDefs[ch];
         const mesh = spriteMesh(textures[def.tex], def.region, { scale: def.scale });
         const h = def.region.h * def.scale;
         mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
         scene.add(mesh);
         blocked.add(`${c},${r}`);
-        // Buildings are 2 tiles wide when scaled up — block the neighbor too.
-        if (def.scale >= 2) {
-          blocked.add(`${c + 1},${r}`);
-          blocked.add(`${c - 1},${r}`);
-        }
+        if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
+      } else if (buildingArt[ch]) {
+        const region = buildingArt[ch];
+        const mesh = spriteMesh(textures.houseTileset, region, { scale: 3 });
+        const h = region.h * 3;
+        mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
+        scene.add(mesh);
+        // Building footprint blocks a few tiles wide.
+        blocked.add(`${c},${r}`);
+        blocked.add(`${c + 1},${r}`);
+        blocked.add(`${c - 1},${r}`);
+        const role = BUILDINGS[ch];
+        npcs.push({ ...role, x: worldX, y: worldY, mesh });
+      } else if (ch === 's') {
+        slimeSpawns.push({ x: worldX, y: worldY });
       } else if (DOCUMENTS[ch]) {
         const doc = DOCUMENTS[ch];
         const mesh = makeDocumentMesh();
         mesh.position.set(worldX, worldY, depthForY(tileBottom));
         scene.add(mesh);
-        items.push({ ...doc, mesh, baseY: worldY, collected: false });
+        items.push({ ...doc, mesh, baseY: worldY, x: worldX, collected: false });
       }
     }
   }
 
-  return { width, height, rows, cols, blocked, items, playerStart };
+  return { width, height, rows, cols, blocked, items, npcs, trees, slimeSpawns, playerStart };
 }
 
 // A little paper document, drawn on a canvas (no asset needed).
@@ -113,7 +130,7 @@ function makeDocumentMesh() {
   return mesh;
 }
 
-// AABB collision against blocked tiles. Returns corrected position.
+// AABB collision against blocked tiles. Returns true if the box hits a wall.
 export function resolveCollision(world, x, y, halfW, halfH) {
   const minC = Math.floor((x - halfW) / TILE);
   const maxC = Math.floor((x + halfW) / TILE);

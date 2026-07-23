@@ -1,12 +1,16 @@
 import { BACKPACK_SLOTS } from './map.js';
 
-// DOM-based HUD: backpack slots, pickup hint, toast messages.
+// DOM-based HUD: objective, backpack, contextual prompt, frustration meter,
+// day counter, and toast messages.
 export class HUD {
   constructor() {
     this.backpackEl = document.getElementById('backpack');
     this.hintEl = document.getElementById('hint');
     this.toastEl = document.getElementById('toast');
     this.questEl = document.getElementById('quest');
+    this.dayEl = document.getElementById('day');
+    this.frustFillEl = document.getElementById('frust-fill');
+    this.frustWrapEl = document.getElementById('frust');
     this.items = [];
     this.#renderSlots();
   }
@@ -35,18 +39,41 @@ export class HUD {
     this.toast(`${item.icon} ${item.name} added to backpack!`);
   }
 
-  showHint(show) {
-    this.hintEl.style.display = show ? 'block' : 'none';
+  hasItem(id) {
+    return this.items.some((i) => i.id === id);
   }
 
-  toast(msg, ms = 2200) {
+  // Contextual interact prompt, e.g. "E — Enter the Bürgeramt". Pass null to hide.
+  showPrompt(text) {
+    if (!text) {
+      this.hintEl.style.display = 'none';
+      return;
+    }
+    this.hintEl.innerHTML = text;
+    this.hintEl.style.display = 'block';
+  }
+
+  setObjective(text) {
+    this.questEl.textContent = text;
+  }
+
+  setDay(day, deadline) {
+    const late = day > deadline;
+    this.dayEl.innerHTML = late
+      ? `📅 Tag ${day} <span class="late">(past the ${deadline}-day deadline!)</span>`
+      : `📅 Tag ${day} / ${deadline}`;
+  }
+
+  setFrustration(value, max) {
+    const pct = Math.max(0, Math.min(1, value / max));
+    this.frustFillEl.style.width = `${pct * 100}%`;
+    this.frustWrapEl.classList.toggle('maxed', pct >= 1);
+  }
+
+  toast(msg, ms = 2400) {
     this.toastEl.textContent = msg;
     this.toastEl.style.opacity = '1';
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => (this.toastEl.style.opacity = '0'), ms);
-  }
-
-  setQuest(text) {
-    this.questEl.textContent = text;
   }
 }

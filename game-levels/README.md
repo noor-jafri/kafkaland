@@ -11,6 +11,13 @@ Every level is the same verbs, new content:
 4. Avoid/survive **hazards** — reuse the existing `BAT` and `SLIME` enemy sprites as personifications of bureaucratic friction (delays, conflicting information, scams), and the `CHICKEN`/`COW` animal sprites as harmless ambient life for village levels.
 5. Deliver the full document set to the level's final NPC to clear the level and unlock the next.
 
+Before any of that, the game opens with a **title screen → narrative intro → How to Play** flow (see [00-title-and-intro.md](00-title-and-intro.md)) that establishes the premise, teaches the controls and the three global systems, and hands off straight into Level 1's opening beat.
+
+On top of that loop, three **global systems** run across every level, so the game is always **funny, interactive, and informative at the same time** — never just one of the three. Full detail in [fun-and-frustration-systems.md](fun-and-frustration-systems.md):
+- **Nag Events** *(funny)* — recurring, non-fatal comedic interruptions (led by the running-gag "Rundfunkbeitrag Man," who chases the player at random regardless of level or relevance).
+- **The Vent Mechanic** *(interactive)* — a Frustration meter fed by hazards/nags, released by punching a level-appropriate prop (a tree, a filing cabinet, a wheelie bin) for a silly animation and a satisfying *thwack*. Always available, never required, purely for fun.
+- **Fact Cards** *(informative)* — small dismissible popups tied to key document pickups and resolved hazards, stating one real, specific fact from the wiki in the game's own dry voice (real deadlines, real fines, real institution names — never invented). Every card seen is logged into a browsable in-game **Codex**, so by the end of the game the player has assembled their own funny-but-accurate mini-guide to actually moving to Nuremberg.
+
 ## Level → wiki mapping
 
 | Level | Theme | Wiki pages covered |
@@ -32,6 +39,8 @@ Every level is the same verbs, new content:
 
 ## Files
 
+- [00-title-and-intro.md](00-title-and-intro.md) — title screen, narrative intro, and How-to-Play instructions (the game's front door)
+- [fun-and-frustration-systems.md](fun-and-frustration-systems.md) — the three global systems (funny/interactive/informative), read this first
 - [level-1-arrival.md](level-1-arrival.md)
 - [level-2-money-health-taxes.md](level-2-money-health-taxes.md)
 - [level-3-auslanderbehorde-gauntlet.md](level-3-auslanderbehorde-gauntlet.md)

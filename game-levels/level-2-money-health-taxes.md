@@ -34,6 +34,18 @@ Get banked, insured, and tax-registered — the financial foundation everything 
 - **Bat enemies** introduced here for the first time — represent "processing delay" — they patrol between the bank and insurance buildings and briefly stun/slow the player on contact (references the appointment-scarcity and video-ident-failure common-problems content).
 - **Slime enemies** at the neobank door (see above) — represents the newcomer rejection risk documented in wiki page 05.
 
+## Fun & Frustration
+
+See [fun-and-frustration-systems.md](fun-and-frustration-systems.md) for the shared systems — L2-specific tuning below.
+
+- **Punchable prop:** a street-side parking meter/postbox combo prop outside the bank row (trees are less common in this more "downtown" setting) — same mechanics as the L1 tree, just re-skinned to fit the district.
+- **Nag Event:** the spam-call bubble flavor gets extra frequent here specifically ("upgrade your Kasko coverage!", "special Girokonto offer, act now!") — a joke that the moment you have money, everyone wants a piece of it. Rundfunkbeitrag Man still appears at his normal base rate.
+- **Comedic set-piece:** the neobank's "video-ident" mini-interaction should be genuinely silly — a quick prompt asking the player to hold up their passport and pull a face on cue ("now blink," "now say 'Anmeldung' three times fast"), then a beat of the verification "spinner" comically failing once before passing, poking fun at how often real video-ident checks glitch.
+- **Fact Cards for this level:**
+  - *(on `girokonto_card` pickup)* "Some German banks genuinely want an Anmeldung *and* a Schufa credit score before they'll open an account — and you can't build a Schufa score without... a German bank account. It's a real catch-22."
+  - *(choosing PKV at the insurance row)* "Heads up: private health insurance (PKV) is genuinely hard to switch back out of once you're past a certain age — it's less of a toggle than it looks like."
+  - *(on `haftpflicht_policy` pickup, if taken)* "This one's cheap (a few euros a month) but German law makes you personally liable for accidental damage with no upper limit — §823 BGB. That tree you keep punching would cost you dearly in real life."
+
 ## Level-clear condition
 
 Deliver `girokonto_card` + `krankenversicherung_card` + `steuer_id_letter` to a "Welcome Center" checkpoint NPC → level complete, unlocks Level 3.

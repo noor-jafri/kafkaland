@@ -1,50 +1,55 @@
-// Level layout, editable as ASCII art. One character = one 16px tile.
+// Level 1 layout, editable as ASCII art. One character = one 16px tile.
 //
 //   .  grass
-//   #  dirt path
-//   T  big tree      (blocks movement)
-//   P  pine tree     (blocks movement)
-//   R  rock          (blocks movement)
-//   A  shop building A (blocks movement)
-//   B  shop building B (blocks movement)
-//   1..9  document spawn points (see DOCUMENTS below)
-//   @  player start
+//   #  dirt path (cosmetic, walkable)
+//   T  big tree      (blocks; also PUNCHABLE for venting)
+//   P  pine tree     (blocks; also punchable)
+//   R  rock          (blocks)
+//   @  player start (train platform, far left)
+//   1  passport pickup      2  SIM pickup
+//   H  Hostel building     (NPC: flavor / respawn)
+//   M  Apartment building  (NPC: grants Mietvertrag + Wohnungsgeberbestätigung)
+//   G  Bürgeramt building  (NPC: delivery point / level goal)
+//   s  Slime spawn         (hazard: bureaucratic friction)
 //
-// Trees/rocks/buildings occupy the tile they're placed on (art overflows freely).
+// Buildings render 3x scale and block a small footprint; the player interacts
+// by standing near them (radius-based), so exact tiles around them stay clear.
 
 export const MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'T......................................T',
-  'T..T....P......T...........P.......T...T',
-  'T.......................R..............T',
-  'T....A.......A.......B........B........T',
-  'T....#.......#.......#........#........T',
-  'T....#.......#.......#........#........T',
-  'T....############################......T',
-  'T........#..............#.....R........T',
-  'T..R.....#....1.........#..............T',
-  'T........#..............#.........P....T',
-  'T..T.....#......@.......#..............T',
-  'T........#..............#....2.........T',
-  'T....P...#..............#..............T',
-  'T........############...#........T.....T',
-  'T...................#...#..............T',
-  'T......3............#...#....R.........T',
-  'T...................#...#..............T',
-  'T..T....B...........#...#......A.......T',
-  'T.......#...........#...#......#.......T',
-  'T.......#############...########.......T',
-  'T......................................T',
-  'T...P........R..........P..........T...T',
+  'T...H..................................T',
+  'T............P.....................R...T',
+  'T..1.......................T...........T',
+  'T.@.......#############################T',
+  'T..2......#............................T',
+  'T.........#................M...........T',
+  'T.........#................#...........T',
+  'T....T....#....s...........#.......G...T',
+  'T.........#................#.......#...T',
+  'T.........#................#.......#...T',
+  'T.........#########s########.......#...T',
+  'T.................................##...T',
+  'T......P............R..................T',
+  'T..R...........T............P..........T',
   'T......................................T',
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
 
-// The documents to collect in this level, keyed by their map digit.
+// Pickable documents on the map, keyed by their map digit.
 export const DOCUMENTS = {
-  1: { id: 'passport', name: 'Reisepass', icon: '🛂' },
-  2: { id: 'anmeldung', name: 'Anmeldung', icon: '📄' },
-  3: { id: 'contract', name: 'Mietvertrag', icon: '📑' },
+  1: { id: 'passport', name: 'Reisepass', icon: '🛂', fact: 'passport' },
+  2: { id: 'sim', name: 'Prepaid-SIM', icon: '📶', fact: 'sim', optional: true },
+};
+
+// Building roles, keyed by their map letter.
+export const BUILDINGS = {
+  H: { id: 'hostel', dialogue: 'hostel' },
+  M: { id: 'apartment', dialogue: 'apartment' },
+  G: { id: 'buergeramt', goal: true },
 };
 
 export const BACKPACK_SLOTS = 5;
+
+// Documents required (delivered at the Bürgeramt) to clear Level 1.
+export const REQUIRED_FOR_ANMELDUNG = ['passport', 'mietvertrag', 'wohnungsgeberbestaetigung'];

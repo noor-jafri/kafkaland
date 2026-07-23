@@ -28,6 +28,19 @@ There is no single hard gate here (mirroring the wiki's own "no strict order —
 - **Waste-sorting minigame** is the closest thing to a challenge here — mis-sorting three items in a row triggers a comedic fine popup and a note taped to the player's door (referencing wiki 14's neighbor-complaint content) but does not fail the level.
 - Chicken/Cow ambient animals throughout — this level should feel the most like a peaceful village sim, contrasting deliberately with Level 3's tension.
 
+## Fun & Frustration
+
+See [fun-and-frustration-systems.md](fun-and-frustration-systems.md) for the shared systems — L4 should feel the loosest/goofiest of all five levels, matching its sandbox role.
+
+- **Punchable prop:** the household wheelie bins outside each building — thematically perfect since this level already has a waste-sorting minigame, and punching the *wrong* bin (comedically) can startle the chicken/cow ambient animals into a brief panicked scatter, which is funny but has zero mechanical consequence.
+- **Nag Event:** this is the one level where Rundfunkbeitrag Man's chase can end in an actual physical gag — because the map is big and open, let him occasionally trip over a rock (`R` tile) mid-chase and faceplant, giving the player a free few seconds and a laugh, before he gets back up and resumes.
+- **Comedic set-piece:** add a **Schwarzfahren ticket-inspector chase** as an optional micro-event on the transit-stop mini-quest — a plain-clothed inspector NPC occasionally "reveals" themselves near the transit stop with an exaggerated badge-flourish animation; if the player has a valid Deutschlandticket item, it's a non-event (inspector nods and moves on), but without one it triggers a short, silly chase around the stop (no real penalty, just a comedic near-miss animation) rather than an actual fine — keeping the level's low-stakes tone intact.
+- **Fact Cards for this level:**
+  - *(on `fuehrerschein` mini-quest completion, non-EU path)* "If your home country doesn't have a licensing agreement with Germany, you get 6 months from your Anmeldung before your foreign license stops being valid to drive on here."
+  - *(after the Schwarzfahren near-miss, ticketless)* "Real ticket inspectors in Germany are often plain-clothed, and the fine applies even if you genuinely didn't mean to ride without a valid ticket."
+  - *(on the waste-sorting minigame, after a mis-sort)* "This isn't just a minigame penalty — real fines for incorrect sorting in Germany have been reported anywhere from €10 to €1,500 depending on how bad it is."
+  - *(on `rundfunk_registered` stamp pickup)* "Proactively registering like you just did actually avoids a real problem: the fee gets backdated to your move-in date whether you register early or the letter finds you first."
+
 ## Level-clear condition
 
 Complete any 3 of the 5 mini-quests above → level complete, unlocks Level 5. Uncompleted mini-quests can optionally remain available/replayable in a "free roam" sense even after clearing, since none of them gate anything later.
