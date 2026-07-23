@@ -1,4 +1,4 @@
-import { BACKPACK_SLOTS } from './map.js';
+import { BACKPACK_SLOTS } from './config.js';
 
 // DOM-based HUD: objective, backpack, contextual prompt, frustration meter,
 // day counter, and toast messages.
@@ -43,6 +43,12 @@ export class HUD {
     return this.items.some((i) => i.id === id);
   }
 
+  // Drop everything except the listed item ids (carry-over between levels).
+  keepItems(ids) {
+    this.items = this.items.filter((i) => ids.includes(i.id));
+    this.#renderSlots();
+  }
+
   // Contextual interact prompt, e.g. "E — Enter the Bürgeramt". Pass null to hide.
   showPrompt(text) {
     if (!text) {
@@ -67,6 +73,7 @@ export class HUD {
   setFrustration(value, max) {
     const pct = Math.max(0, Math.min(1, value / max));
     this.frustFillEl.style.width = `${pct * 100}%`;
+    this.frustWrapEl.classList.toggle('high', pct >= 0.6 && pct < 1);
     this.frustWrapEl.classList.toggle('maxed', pct >= 1);
   }
 

@@ -1,22 +1,18 @@
 import * as THREE from 'three';
-import { CAMERA_ZOOM, INTERACT_RADIUS, FRUSTRATION, DAY_TIMER } from './config.js';
+import { CAMERA_ZOOM, INTERACT_RADIUS, FRUSTRATION, FRUSTRATION_PROMPTS, DAY_TIMER, NAG, TRAIL } from './config.js';
 import { loadAll } from './textures.js';
 import { buildWorld } from './world.js';
 import { Player } from './player.js';
 import { HUD } from './ui.js';
 import { Screens } from './screens.js';
-import { buildSlimes } from './enemies.js';
+import { buildEnemies } from './enemies.js';
 import { Nag } from './nag.js';
 import { wasPressed, endFrame } from './input.js';
 import { DIALOGUES, NAG_LINES, VENT_LINES } from './content.js';
-import { REQUIRED_FOR_ANMELDUNG } from './map.js';
+import LEVEL1 from './levels/level1.js';
+import LEVEL2 from './levels/level2.js';
 
-// Items handed over by NPCs (not found on the map).
-const GRANTED = {
-  mietvertrag: { id: 'mietvertrag', name: 'Mietvertrag', icon: '📑', fact: 'mietvertrag' },
-  wohnungsgeberbestaetigung: { id: 'wohnungsgeberbestaetigung', name: 'Wohnungsgeberbestätigung', icon: '🏠', fact: 'wohnungsgeberbestaetigung' },
-  meldebescheinigung: { id: 'meldebescheinigung', name: 'Meldebescheinigung', icon: '📄', fact: 'meldebescheinigung' },
-};
+const LEVELS = { 1: LEVEL1, 2: LEVEL2 };
 
 async function start() {
   const app = document.getElementById('app');
@@ -45,32 +41,14 @@ async function start() {
   window.addEventListener('resize', resize);
 
   const textures = await loadAll();
-  const world = buildWorld(scene, textures);
-  const player = new Player(scene, textures, world.playerStart);
   const hud = new HUD();
-  const slimes = buildSlimes(scene, textures, world.slimeSpawns);
   const nag = new Nag(scene);
-
-  let started = false;
-  const screens = new Screens({
-    onStart: () => {
-      started = true;
-      hud.setObjective('🎯 Anmeldung: find a flat, then bring your passport + documents to the Bürgeramt.');
-      hud.setDay(1, DAY_TIMER.deadlineDay);
-      hud.setFrustration(0, FRUSTRATION.max);
-      hud.toast('🚆 You step off the train in Nuremberg. → Move with WASD.');
-    },
-  });
-
   nag.onSpawn = () => hud.toast('📮 ' + NAG_LINES.spawn);
   nag.onLeave = (m) => hud.toast('📮 ' + m);
 
-  window.__game = { player, camera, world, screens }; // debug handle
-
-  camera.position.x = player.pos.x;
-  camera.position.y = player.pos.y;
-
-  // --- game state ---
+  // --- Per-run objects & state, (re)built each level ---
+  let level, world, player, enemies;
+  let started = false;
   let frustration = 0;
   let hitCooldown = 0;
   let playTime = 0;
@@ -78,23 +56,62 @@ async function start() {
   let lateWarned = false;
   let registered = false;
   let pendingWin = false;
-  let ventHintShown = false;
-  let flatClaimed = false;
+  let frustPromptIdx = 0;
+  let trailTimer = 0;
+  let claimed = new Set();
 
-  const clock = new THREE.Clock();
-  let elapsed = 0;
+  // Build (or rebuild) a level. keepIds are backpack items that carry over.
+  function loadLevel(id, keepIds = []) {
+    level = LEVELS[id];
+    if (world) scene.remove(world.root);
+    world = buildWorld(scene, textures, level);
+    enemies = buildEnemies(world.root, textures, world.enemySpawns);
+    if (!player) player = new Player(scene, textures, world.playerStart);
+    else player.pos.copy(world.playerStart);
 
-  function addFrustration(amount) {
-    frustration = Math.min(FRUSTRATION.max, frustration + amount);
-    if (!ventHintShown) {
-      ventHintShown = true;
-      hud.toast('😤 Frustration rising. Find a tree and press F to vent.');
-    }
+    hud.keepItems(keepIds);
+    frustration = 0;
+    hitCooldown = 0;
+    playTime = 0;
+    curDay = 1;
+    lateWarned = false;
+    registered = false;
+    pendingWin = false;
+    frustPromptIdx = 0;
+    trailTimer = 0;
+    claimed = new Set();
+    nag.reset();
+
+    camera.position.x = player.pos.x;
+    camera.position.y = player.pos.y;
+    window.__game = { level, player, camera, world, screens }; // debug handle
+  }
+
+  function announceLevel() {
+    hud.setObjective(level.startObjective);
+    hud.setDay(1, DAY_TIMER.deadlineDay);
+    hud.setFrustration(0, FRUSTRATION.max);
+    hud.toast(level.startToast);
+  }
+
+  const screens = new Screens({
+    onStart: () => {
+      started = true;
+      announceLevel();
+    },
+  });
+
+  loadLevel(1); // build a world to render behind the title screen
+
+  // --- Helpers that read the current `level` ---
+  function itemName(id) {
+    const doc = Object.values(level.documents || {}).find((d) => d.id === id);
+    return doc?.name || level.granted[id]?.name || id;
   }
 
   function grantItems(ids) {
     for (const id of ids) {
-      const it = GRANTED[id];
+      const it = level.granted[id];
       hud.addItem(it);
       if (it.fact) screens.queueFact(it.fact);
     }
@@ -105,36 +122,59 @@ async function start() {
     item.mesh.removeFromParent();
     hud.addItem(item);
     if (item.fact) screens.queueFact(item.fact);
+    // Objective checkpoint: picking up the level's key document advances the goal.
+    if (item.id === (level.passportItem || 'passport') && level.passportObjective) {
+      hud.setObjective(level.passportObjective);
+    }
+  }
+
+  function addFrustration(amount) {
+    frustration = Math.min(FRUSTRATION.max, frustration + amount);
+    const frac = frustration / FRUSTRATION.max;
+    while (frustPromptIdx < FRUSTRATION_PROMPTS.length && frac >= FRUSTRATION_PROMPTS[frustPromptIdx]) {
+      frustPromptIdx++;
+      hud.toast('😤 Frustration is high. Find a tree and press F to vent it out.');
+    }
   }
 
   function interactNpc(npc) {
-    if (npc.id === 'hostel') {
-      screens.startDialogue(DIALOGUES.hostel.speaker, DIALOGUES.hostel.lines);
-    } else if (npc.id === 'apartment') {
-      if (flatClaimed) {
-        hud.toast('🏠 The flat is already yours. Off to the Bürgeramt!');
-        return;
-      }
-      const d = DIALOGUES.apartment;
-      screens.startDialogue(d.speaker, d.lines, () => {
-        flatClaimed = true;
-        grantItems(d.grants);
-      });
-    } else if (npc.goal) {
-      const hasAll = REQUIRED_FOR_ANMELDUNG.every((id) => hud.hasItem(id));
+    if (npc.goal) {
+      const hasAll = level.required.every((id) => hud.hasItem(id));
       if (hasAll) {
-        const d = DIALOGUES.buergeramt_complete;
+        const d = DIALOGUES[npc.completeDialogue];
         screens.startDialogue(d.speaker, d.lines, () => {
-          grantItems(d.grants); // queues the Meldebescheinigung fact card
+          grantItems(d.grants);
           registered = true;
-          pendingWin = true; // win screen shows once that card is dismissed
-          hud.setObjective('✅ Registered! You are official in Nuremberg.');
+          pendingWin = true; // win screen shows once the last fact card is dismissed
+          hud.setObjective(`✅ ${level.name} complete!`);
         });
       } else {
-        const d = DIALOGUES.buergeramt_incomplete;
-        screens.startDialogue(d.speaker, d.lines);
+        const d = DIALOGUES[npc.incompleteDialogue];
+        const missing = level.required.filter((id) => !hud.hasItem(id)).map(itemName);
+        const lines = [...d.lines, `You are still missing: ${missing.join(', ')}. No documents, no service. Come back when you're complete.`];
+        screens.startDialogue(d.speaker, lines);
       }
+      return;
     }
+    // Hard gate: refuse until the player holds every required item.
+    if (npc.requires && !npc.requires.every((id) => hud.hasItem(id))) {
+      const g = DIALOGUES[npc.gateDialogue];
+      screens.startDialogue(g.speaker, g.lines);
+      return;
+    }
+    if (npc.claimOnce && claimed.has(npc.id)) {
+      hud.toast(npc.claimedToast);
+      return;
+    }
+    const d = DIALOGUES[npc.dialogue];
+    const onDone = d.grants
+      ? () => {
+          if (npc.claimOnce) claimed.add(npc.id);
+          grantItems(d.grants);
+          if (npc.nextObjective) hud.setObjective(npc.nextObjective);
+        }
+      : undefined;
+    screens.startDialogue(d.speaker, d.lines, onDone);
   }
 
   // Nearest document / npc within interact radius.
@@ -163,6 +203,9 @@ async function start() {
     return best;
   }
 
+  const clock = new THREE.Clock();
+  let elapsed = 0;
+
   function frame() {
     requestAnimationFrame(frame);
     const size = renderer.getSize(new THREE.Vector2());
@@ -175,10 +218,10 @@ async function start() {
     const wasBlocking = screens.blocking();
     screens.update();
 
-    // Show the win screen once the final Meldebescheinigung fact card is dismissed.
+    // Show the win screen once the final fact card is dismissed.
     if (pendingWin && !screens.blocking()) {
       pendingWin = false;
-      screens.showWon(hud.items);
+      screens.showWon(hud.items, level.win, () => loadLevel(2, ['meldebescheinigung']));
     }
 
     const frozen = wasBlocking || !started;
@@ -211,21 +254,31 @@ async function start() {
         }
       }
 
-      // Slimes.
+      // Record a breadcrumb trail for the Nag to follow.
+      trailTimer -= dt;
+      if (trailTimer <= 0) {
+        trailTimer = TRAIL.sampleInterval;
+        world.trail.push({ x: player.pos.x, y: player.pos.y });
+        if (world.trail.length > TRAIL.maxPoints) world.trail.shift();
+      }
+
+      // Enemies (slimes, bats): contact adds frustration.
       hitCooldown = Math.max(0, hitCooldown - dt);
-      for (const s of slimes) {
-        s.update(dt);
+      for (const e of enemies) {
+        e.update(dt);
         if (hitCooldown === 0) {
-          const d = Math.hypot(s.pos.x - player.pos.x, s.pos.y - player.pos.y);
-          if (d < 16) {
+          const d = Math.hypot(e.pos.x - player.pos.x, e.pos.y - player.pos.y);
+          if (d < e.contactRadius) {
             hitCooldown = FRUSTRATION.hitCooldown;
             addFrustration(FRUSTRATION.perSlimeHit);
-            hud.toast('🟢 Red tape! Conflicting information! (+frustration)');
+            hud.toast(e.kind === 'bat'
+              ? '🦇 Processing delay! Your file drops to the bottom of the pile. (+frustration)'
+              : '🟢 Red tape! Conflicting information! (+frustration)');
           }
         }
       }
 
-      // Nag: Rundfunkbeitrag Man.
+      // Nag: the Collector.
       const nagResult = nag.update(dt, world, player, false);
       if (nagResult === 'caught') {
         addFrustration(FRUSTRATION.perNagCaught);
@@ -233,11 +286,13 @@ async function start() {
         screens.queueFact('rundfunk');
         nag.despawn();
       } else if (nagResult === 'fled') {
-        nag.despawn(NAG_LINES.fled);
+        nag.despawn(NAG_LINES.fled, true);
       }
 
-      // Passive frustration decay.
+      // Passive frustration decay (re-arms the vent prompts as you calm down).
       frustration = Math.max(0, frustration - 4 * dt);
+      const frac = frustration / FRUSTRATION.max;
+      while (frustPromptIdx > 0 && frac < FRUSTRATION_PROMPTS[frustPromptIdx - 1]) frustPromptIdx--;
       hud.setFrustration(frustration, FRUSTRATION.max);
 
       // Vent: punch a nearby tree with F.
@@ -265,9 +320,9 @@ async function start() {
         const target = nearestTarget();
         if (target?.kind === 'doc') prompt = `<b>E</b> — Pick up ${target.item.name}`;
         else if (target?.kind === 'npc') {
-          if (target.npc.id === 'hostel') prompt = '<b>E</b> — Talk to the hostel clerk';
-          else if (target.npc.id === 'apartment') prompt = flatClaimed ? null : '<b>E</b> — Ask about the flat';
-          else if (target.npc.goal) prompt = '<b>E</b> — Enter the Bürgeramt';
+          const npc = target.npc;
+          if (npc.claimOnce && claimed.has(npc.id)) prompt = null;
+          else prompt = `<b>E</b> — ${npc.prompt || 'Interact'}`;
         }
       }
       if (!prompt && tree) prompt = '<b>F</b> — punch the tree (vent)';

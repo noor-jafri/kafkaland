@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { TILE, REGIONS } from './config.js';
-import { MAP, DOCUMENTS, BUILDINGS } from './map.js';
 import { spriteMesh } from './textures.js';
 import { createHouseMesh, houseCenterXForEntrance } from './house.js';
 
@@ -9,8 +8,12 @@ export function depthForY(y) {
   return 1 + y * -0.001;
 }
 
-// Builds the whole level. Returns everything main.js needs.
-export function buildWorld(scene, textures) {
+// Builds a level from its data object (see src/levels/*). Returns everything
+// main.js needs. `level` supplies { map, documents, buildings }.
+export function buildWorld(scene, textures, level) {
+  const MAP = level.map;
+  const DOCUMENTS = level.documents;
+  const BUILDINGS = level.buildings;
   const rows = MAP.length;
   const cols = MAP[0].length;
   const width = cols * TILE;
@@ -20,8 +23,14 @@ export function buildWorld(scene, textures) {
   const items = []; // pickable documents
   const npcs = []; // interactable buildings
   const trees = []; // punchable-tree world positions (for the Vent Mechanic)
-  const slimeSpawns = []; // world positions where slimes patrol
+  const enemySpawns = { slime: [], bat: [] }; // world positions, keyed by kind
+  const trail = []; // breadcrumb of recent player positions (the Nag follows it)
   let playerStart = new THREE.Vector2(width / 2, height / 2);
+
+  // Everything a level owns hangs off this group, so a level switch can remove
+  // the whole thing (and its enemies) in one call. See main.js startLevel().
+  const root = new THREE.Group();
+  scene.add(root);
 
   // --- Ground: one canvas with grass everywhere + dirt on path tiles ---
   const canvas = document.createElement('canvas');
@@ -47,7 +56,7 @@ export function buildWorld(scene, textures) {
     new THREE.MeshBasicMaterial({ map: groundTex })
   );
   ground.position.set(width / 2, height / 2, 0);
-  scene.add(ground);
+  root.add(ground);
 
   // --- Scenery objects ---
   const sceneryDefs = {
@@ -70,7 +79,7 @@ export function buildWorld(scene, textures) {
         const mesh = spriteMesh(textures[def.tex], def.region, { scale: def.scale });
         const h = def.region.h * def.scale;
         mesh.position.set(worldX, tileBottom + h / 2 - 2, depthForY(tileBottom));
-        scene.add(mesh);
+        root.add(mesh);
         blocked.add(`${c},${r}`);
         if (def.punchable) trees.push({ x: worldX, y: worldY, mesh });
       } else if (BUILDINGS[ch]) {
@@ -81,24 +90,26 @@ export function buildWorld(scene, textures) {
           tileBottom + h / 2 - 2,
           depthForY(tileBottom)
         );
-        scene.add(mesh);
+        root.add(mesh);
         for (let offset = -2; offset <= 2; offset++) {
           blocked.add(`${c + offset},${r}`);
         }
         npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
       } else if (ch === 's') {
-        slimeSpawns.push({ x: worldX, y: worldY });
+        enemySpawns.slime.push({ x: worldX, y: worldY });
+      } else if (ch === 'b') {
+        enemySpawns.bat.push({ x: worldX, y: worldY });
       } else if (DOCUMENTS[ch]) {
         const doc = DOCUMENTS[ch];
         const mesh = makeDocumentMesh();
         mesh.position.set(worldX, worldY, depthForY(tileBottom));
-        scene.add(mesh);
+        root.add(mesh);
         items.push({ ...doc, mesh, baseY: worldY, x: worldX, collected: false });
       }
     }
   }
 
-  return { width, height, rows, cols, blocked, items, npcs, trees, slimeSpawns, playerStart };
+  return { width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root };
 }
 
 // A little paper document, drawn on a canvas (no asset needed).

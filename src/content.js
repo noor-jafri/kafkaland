@@ -23,9 +23,16 @@ export const HOWTO = {
     ['🐔 🐄 Chickens & Cows', 'Just vibes. Ambient village life. Harmless.'],
   ],
   systems: [
-    ['Nag Events', 'German admin interrupts you at random. One certain letter-carrier especially. You\'ll see.'],
-    ['The Vent Mechanic', 'A Frustration meter fills as things go wrong. Real life gives you nowhere to put that feeling. This game gives you a tree.'],
+    ['The Collector', 'A tall man in a black coat hunts you for the Rundfunkbeitrag (broadcast fee). He follows your TRAIL, not a straight line — double back, break line of sight, or pay him to be rid of him. He always returns.'],
+    ['The Vent Mechanic', 'A Frustration meter fills as things go wrong. Real life gives you nowhere to put that feeling. This game gives you a tree — stand near one and press F.'],
     ['Fact Cards', 'Every so often the game tells you one TRUE, specific thing about moving to Nuremberg. They go in your Codex.'],
+  ],
+  // The intended order for Level 1. Documents don't just lie in the open — and
+  // each office refuses you until you hold what it asks for.
+  steps: [
+    ['1. Find your Reisepass', 'It is NOT out in the open. Explore the dead-ends — check behind the trees.'],
+    ['2. Rent a flat (Landlord, M)', 'He won\'t even talk to you without a passport. With it, he hands over the Mietvertrag + Wohnungsgeberbestätigung.'],
+    ['3. Register (Bürgeramt, G)', 'Bring passport + both flat documents. Missing one? They\'ll tell you exactly which — and send you away.'],
   ],
   roadmap: '①  ARRIVE  →  ②  MONEY, HEALTH, TAXES  →  ③  THE AUSLÄNDERBEHÖRDE (boss!)  →  ④  GETTING AROUND  →  ⑤  FAMILY & FOREVER',
 };
@@ -56,6 +63,27 @@ export const FACT_CARDS = {
     title: 'Rundfunkbeitrag',
     body: "That guy's real. It's the Rundfunkbeitrag — €18.36/month per household — and yes, it gets backdated to your move-in date even if the letter takes months to find you. Running doesn't save you a cent.",
   },
+  // --- Level 2: Money, Health, Taxes ---
+  antrag: {
+    title: 'Kontoantrag',
+    body: "German banks still love paper. Many want a signed account application (Kontoantrag) plus your Meldebescheinigung and passport before they'll open a Girokonto. Neobanks skip the branch, but the paperwork is the same idea.",
+  },
+  passfoto: {
+    title: 'Passfoto',
+    body: "Biometric passport photos (35×45mm, neutral face, no smiling) are demanded by half the offices here. There's a photo booth in every train station for exactly this reason. Buy a strip; you'll need them again.",
+  },
+  iban: {
+    title: 'Girokonto (IBAN)',
+    body: "Almost nothing works without a German IBAN: rent, salary, insurance, the tax office. It's the financial address that says you're really here. Direct debit (Lastschrift) runs the whole country.",
+  },
+  versichertenkarte: {
+    title: 'Versichertenkarte',
+    body: "Health insurance isn't optional in Germany — it's legally mandatory (§193 VVG). Public (gesetzlich) insurers must accept you; your Versichertenkarte is what every doctor scans before they'll see you.",
+  },
+  steuerid: {
+    title: 'Steuer-ID',
+    body: "Your Steuer-Identifikationsnummer is 11 digits, assigned for life, and arrives by post a few weeks after you register. Your employer needs it or you get taxed at the brutal emergency rate. Guard the letter.",
+  },
 };
 
 // NPC building dialogues. Each is a list of lines; some grant items when finished.
@@ -77,12 +105,19 @@ export const DIALOGUES = {
     ],
     grants: ['mietvertrag', 'wohnungsgeberbestaetigung'],
   },
-  // Bürgeramt lines are chosen dynamically in main.js depending on progress.
+  // Gate: shown when you try to rent without a passport.
+  apartment_needs_passport: {
+    speaker: 'Landlord',
+    lines: [
+      "Whoa. No passport, no conversation. How do I even know you exist?",
+      "Go find your Reisepass first. Then we talk about the flat.",
+    ],
+  },
+  // The Bürgeramt's refusal: main.js appends a dynamic line naming what's missing.
   buergeramt_incomplete: {
     speaker: 'Bürgeramt Official',
     lines: [
-      "Anmeldung? Sehr gut. Show me: passport, Mietvertrag, and the Wohnungsgeberbestätigung.",
-      "…You don't have all three. No documents, no registration. This is Germany. Come back when you're complete.",
+      "Anmeldung? Sehr gut. I require: passport, Mietvertrag, and the Wohnungsgeberbestätigung.",
     ],
   },
   buergeramt_complete: {
@@ -94,14 +129,62 @@ export const DIALOGUES = {
     ],
     grants: ['meldebescheinigung'],
   },
+
+  // --- Level 2: Money, Health, Taxes ---
+  bank: {
+    speaker: 'Bank Advisor',
+    lines: [
+      "Meldebescheinigung, passport, and — ah, the signed Kontoantrag. Wunderbar.",
+      "Your Girokonto is open. Here is your IBAN. Rent, salary, insurance — everything flows through this now.",
+    ],
+    grants: ['iban'],
+  },
+  bank_needs_antrag: {
+    speaker: 'Bank Advisor',
+    lines: [
+      "You want an account, but where is your Kontoantrag? The signed application form?",
+      "No form, no Konto. Find one, sign it, come back.",
+    ],
+  },
+  krankenkasse: {
+    speaker: 'Krankenkasse Agent',
+    lines: [
+      "Health insurance — mandatory, by the way, not a choice. You have an IBAN? Good, we bill by Lastschrift.",
+      "Welcome to the gesetzliche Krankenversicherung. Here is your Versichertenkarte. Don't get sick before it arrives — but if you do, you're covered.",
+    ],
+    grants: ['versichertenkarte'],
+  },
+  krankenkasse_needs_iban: {
+    speaker: 'Krankenkasse Agent',
+    lines: [
+      "We can insure you, but we bill monthly by direct debit. No German IBAN, no policy.",
+      "Open a bank account first. Then come back.",
+    ],
+  },
+  // Finanzamt's refusal: main.js appends a dynamic line naming what's missing.
+  finanzamt_incomplete: {
+    speaker: 'Finanzamt Clerk',
+    lines: [
+      "Steuer-ID registration. I need proof you're banked and insured: your IBAN and your Versichertenkarte.",
+    ],
+  },
+  finanzamt_complete: {
+    speaker: 'Finanzamt Clerk',
+    lines: [
+      "IBAN… Versichertenkarte… all in order. Efficient. I almost don't know what to do with that.",
+      "Your Steuer-Identifikationsnummer is registered. Eleven digits, yours for life.",
+      "Bank, health, taxes — you are a full citizen of the paperwork now. The Ausländerbehörde awaits, but that… is another day.",
+    ],
+    grants: ['steuerid'],
+  },
 };
 
-// Rundfunkbeitrag Man barks (picked at random when he spawns / catches you).
+// The Collector barks (picked when he spawns / catches you). Menacing, but dry.
 export const NAG_LINES = {
-  spawn: 'EIN HAUSHALT, EIN BEITRAG!',
-  caught: "Backdated invoice! Itemized! Since your move-in date! Ha!",
-  paid: 'Danke schön. …Bis nächstes Mal.',
-  fled: '…na gut. Nächstes Mal.',
+  spawn: 'EIN HAUSHALT… EIN BEITRAG. I can see your trail.',
+  caught: "Backdated. Itemized. Since your move-in date. There is no escape from the fee.",
+  paid: 'Danke schön. …I always come back.',
+  fled: 'You cannot outrun a public institution forever. …Bis bald.',
 };
 
 export const VENT_LINES = [

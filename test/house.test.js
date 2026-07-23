@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { ASSETS, TILE } from '../src/config.js';
 import { HOUSE_ART, houseCenterXForEntrance } from '../src/house.js';
-import { BUILDINGS, MAP } from '../src/map.js';
+import { BUILDINGS, MAP } from '../src/levels/level1.js';
 
 test('Craftpix runtime house matches its declared native render size', async () => {
   const png = await readFile(new URL('../assets/Craftpix/house.png', import.meta.url));

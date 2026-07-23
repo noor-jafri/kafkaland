@@ -47,22 +47,25 @@ export class Screens {
     this.#renderDialogue();
   }
 
-  showWon(items) {
+  // win: the current level's { title, sub, body, nextLabel, hasNext } metadata.
+  // onContinue: called when the player confirms and hasNext is true.
+  showWon(items, win, onContinue) {
     this.phase = 'won';
     this.overlay = null;
+    this.onWonContinue = win.hasNext ? onContinue : null;
     this.#hideAll();
     const list = items.map((i) => `<li>${i.icon} ${i.name}</li>`).join('');
+    const nextCls = win.hasNext ? 'menu-item selected' : 'menu-item selected disabled';
     this.innerEl.innerHTML = `
-      <div class="big">✅ LEVEL 1 COMPLETE</div>
-      <div class="sub">You are officially registered in Nuremberg.</div>
-      <p class="won-body">The Meldebescheinigung is yours. It unlocks everything that comes next:
-      a bank account, health insurance, your tax ID, your residence permit.</p>
+      <div class="big">${win.title}</div>
+      <div class="sub">${win.sub}</div>
+      <p class="won-body">${win.body}</p>
       <div class="won-col">
         <div class="won-h">In your backpack:</div>
         <ul>${list}</ul>
       </div>
-      <div class="menu"><div class="menu-item selected">▶ Continue to Level 2 (coming soon)</div></div>
-      <div class="foot">Press <b>C</b> any time to reread your Codex — you earned it.</div>`;
+      <div class="menu"><div class="${nextCls}">${win.nextLabel}</div></div>
+      <div class="foot">${win.hasNext ? 'Press <b>E</b> / Space to continue · ' : ''}Press <b>C</b> any time to reread your Codex.</div>`;
     this.screenEl.classList.remove('hidden');
   }
 
@@ -79,7 +82,7 @@ export class Screens {
       if (codexKey || esc || confirm) this.#closeCodex();
       return;
     }
-    if (this.phase === 'playing' && this.overlay === null && codexKey && this.codexUnlocked()) {
+    if ((this.phase === 'playing' || this.phase === 'won') && this.overlay === null && codexKey && this.codexUnlocked()) {
       this.#openCodex();
       return;
     }
@@ -101,6 +104,15 @@ export class Screens {
       if (confirm) this.#beginPlaying();
     } else if (this.phase === 'credits') {
       if (confirm || esc) this.#renderTitle();
+    } else if (this.phase === 'won') {
+      if (confirm && this.onWonContinue) {
+        const go = this.onWonContinue;
+        this.onWonContinue = null;
+        this.phase = 'playing';
+        this.overlay = null;
+        this.screenEl.classList.add('hidden');
+        go();
+      }
     }
   }
 
@@ -193,12 +205,15 @@ export class Screens {
     const controls = HOWTO.controls.map(([k, v]) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`).join('');
     const creatures = HOWTO.creatures.map(([k, v]) => `<div class="row"><b>${k}</b> — ${v}</div>`).join('');
     const systems = HOWTO.systems.map(([k, v]) => `<div class="row"><b>${k}</b> — ${v}</div>`).join('');
+    const steps = HOWTO.steps.map(([k, v]) => `<div class="row"><b>${k}</b> — ${v}</div>`).join('');
     this.innerEl.innerHTML = `
       <div class="big">How to Play</div>
       <div class="howto-grid">
         <div class="howto-col">
           <div class="howto-h">Controls</div>
           <table class="controls">${controls}</table>
+          <div class="howto-h" style="margin-top:10px">Your goal (in order)</div>
+          ${steps}
         </div>
         <div class="howto-col">
           <div class="howto-h">Who you'll meet</div>

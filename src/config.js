@@ -54,6 +54,17 @@ export const CAMERA_ZOOM = 3;
 
 export const INTERACT_RADIUS = 34; // how close you must be to interact (world px)
 
+export const BACKPACK_SLOTS = 6;
+
+// Bat = "Processing Delay" (Level 2+): loops around its spawn on a lazy orbit.
+export const BAT = {
+  frameSize: 48,
+  idle: { frames: 4, fps: 8 },
+  speed: 1.6, // radians/sec around its orbit
+  radius: 34, // orbit radius in world px
+  contactRadius: 15,
+};
+
 // Frustration / Vent Mechanic tuning.
 export const FRUSTRATION = {
   max: 100,
@@ -69,10 +80,24 @@ export const DAY_TIMER = {
   deadlineDay: 14,
 };
 
-// Rundfunkbeitrag Man (the recurring nag).
+// Rundfunkbeitrag Man (the recurring nag / villain). He follows a breadcrumb
+// trail of your recent positions instead of beelining — so he tracks where you
+// actually went and (incidentally) routes around the obstacles you did.
 export const NAG = {
-  firstDelay: 20, // seconds before he can first appear
-  interval: 55, // rough seconds between appearances
-  speed: 70, // slightly slower than the player (PLAYER.speed = 90)
-  catchRadius: 18,
+  firstDelay: 16, // seconds before he can first appear
+  interval: 30, // rough seconds between appearances (was 55 — now near-constant pressure)
+  refleeInterval: 18, // he comes back faster after giving up than after catching you
+  speed: 74, // still slightly slower than the player (PLAYER.speed = 90)
+  catchRadius: 20,
+  giveUp: 24, // seconds of failing to catch you before he flees (was 10)
+  trailReachRadius: 12, // how close to a trail point before advancing to the next
 };
+
+// Breadcrumb trail the Nag follows.
+export const TRAIL = {
+  sampleInterval: 0.28, // seconds between recorded points
+  maxPoints: 48,
+};
+
+// Frustration levels at which the "go vent on a tree" nudge re-appears (fraction of max).
+export const FRUSTRATION_PROMPTS = [0.4, 0.75, 0.95];
