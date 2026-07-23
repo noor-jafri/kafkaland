@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#15241f" />
+    <meta name="description" content="A standalone audition desk for Kafkaland procedural audio." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23182f27'/%3E%3Cpath d='M17 45V18h7v11l11-11h9L31 31l14 14h-9L24 33v12z' fill='%23c9e8ad'/%3E%3C/svg%3E" />
+    <title>Kafkaland Sound Desk</title>
+    <link rel="stylesheet" href="./audition.css" />
+  </head>
+  <body>
+    <div class="page-glow page-glow-one" aria-hidden="true"></div>
+    <div class="page-glow page-glow-two" aria-hidden="true"></div>
+
+    <header class="hero shell">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Internal audio lab</p>
+        <h1>Kafkaland <strong>Sound Desk</strong></h1>
+        <p class="lede">
+          Audition the zero-asset procedural score, mix each bus, and verify how
+          music makes room for dialogue and the companion.
+        </p>
+      </div>
+      <div class="unlock-panel" id="unlock-panel">
+        <div class="context-row">
+          <span class="context-dot" id="context-dot"></span>
+          <span id="context-state">Audio locked</span>
+        </div>
+        <button class="button button-primary" id="unlock-audio" type="button">
+          <span aria-hidden="true">▶</span>
+          Unlock audio
+        </button>
+        <p>Browsers require one explicit gesture before sound can begin.</p>
+      </div>
+    </header>
+
+    <main class="shell layout">
+      <section class="panel transport-panel" aria-labelledby="score-heading">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">01 / Score</p>
+            <h2 id="score-heading">Procedural tracks</h2>
+          </div>
+          <div class="meter" id="meter" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="track-grid" id="track-grid"></div>
+
+        <div class="demo-strip">
+          <div>
+            <p class="demo-title">Crossfade check</p>
+            <p id="demo-copy">Exploration smoothly hands off to the office score.</p>
+          </div>
+          <div class="button-row">
+            <button class="button button-secondary" id="crossfade-demo" type="button">
+              Run A/B demo
+            </button>
+            <button class="button button-quiet" id="stop-all" type="button">Stop all</button>
+          </div>
+        </div>
+
+        <div class="slot-readout" aria-label="Active audio slots">
+          <div><span>Main score</span><strong id="slot-music-main">Stopped</strong></div>
+          <div><span>Companion bed</span><strong id="slot-companion-ambience">Stopped</strong></div>
+          <div><span>Pressure layer</span><strong id="slot-pressure-layer">Stopped</strong></div>
+        </div>
+      </section>
+
+      <aside class="panel mixer-panel" aria-labelledby="mixer-heading">
+        <div class="section-heading compact">
+          <div>
+            <p class="kicker">02 / Mixer</p>
+            <h2 id="mixer-heading">Channel balance</h2>
+          </div>
+          <button class="icon-button" id="reset-mix" type="button" title="Reset mix" aria-label="Reset mix">
+            ↺
+          </button>
+        </div>
+        <div class="mixer" id="mixer"></div>
+
+        <div class="ducking-block">
+          <div class="subheading">
+            <div>
+              <h3>Voice ducking</h3>
+              <p>Toggle live mix profiles.</p>
+            </div>
+            <output id="duck-value">100%</output>
+          </div>
+          <button class="toggle-card" id="duck-dialogue" type="button" aria-pressed="false">
+            <span class="toggle-icon" aria-hidden="true">◌</span>
+            <span><strong>Dialogue open</strong><small>Softly lowers the world</small></span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+          <button class="toggle-card" id="duck-companion" type="button" aria-pressed="false">
+            <span class="toggle-icon" aria-hidden="true">✦</span>
+            <span><strong>Companion speaking</strong><small>Creates a wider voice pocket</small></span>
+            <span class="switch" aria-hidden="true"></span>
+          </button>
+          <div class="duck-factors" id="duck-factors">
+            <span>Music <strong>1.00</strong></span>
+            <span>Ambience <strong>1.00</strong></span>
+            <span>Effects <strong>1.00</strong></span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel effects-panel" aria-labelledby="effects-heading">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">03 / Effects</p>
+            <h2 id="effects-heading">Procedural soundboard</h2>
+          </div>
+          <p class="section-note">Every sound is synthesized in your browser.</p>
+        </div>
+        <div class="effect-groups" id="effect-groups"></div>
+      </section>
+
+      <section class="panel console-panel" aria-labelledby="console-heading">
+        <div class="section-heading compact">
+          <div>
+            <p class="kicker">04 / Monitor</p>
+            <h2 id="console-heading">Session log</h2>
+          </div>
+          <button class="button button-quiet small" id="clear-log" type="button">Clear</button>
+        </div>
+        <ol class="session-log" id="session-log" aria-live="polite"></ol>
+      </section>
+    </main>
+
+    <footer class="shell footer">
+      <span>Kafkaland procedural audio foundation</span>
+      <span>No samples, downloads, external APIs, or runtime dependencies.</span>
+    </footer>
+
+    <noscript>This audition desk requires JavaScript to synthesize audio.</noscript>
+    <script type="module" src="./audition.js"></script>
+  </body>
+</html>
