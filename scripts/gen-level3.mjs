@@ -32,6 +32,7 @@ put(36, 11, 'J');         // Employer (goal)
 
 // --- Pickup + hazards ---
 put(2, 9, '@');            // start
+put(4, 9, 'Q');            // Marlene companion kiosk
 put(11, 3, '1');           // Fiktionsbescheinigung (front, near start route)
 put(9, 9, 's');
 put(17, 6, 's');
@@ -50,7 +51,7 @@ let start = null;
 for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
   const ch = g[r][c];
   if (ch === '@') start = { c, r };
-  if (ch === 'T' || ch === 'P' || ch === 'R') blocked.add(`${c},${r}`);
+  if (ch === 'T' || ch === 'P' || ch === 'R' || ch === 'Q') blocked.add(`${c},${r}`);
   if (BUILD.has(ch)) for (let o = -2; o <= 2; o++) blocked.add(`${c + o},${r}`);
 }
 const seen = new Set([`${start.c},${start.r}`]);

@@ -35,6 +35,7 @@ put(33, 14, 'T');
 
 // --- Features ---
 put(2, 9, '@');                // player start (left, mid)
+put(4, 9, 'Q');                // Marlene companion kiosk
 put(6, 3, 'H');                // hostel (flavor)  — row 3 keeps roof in-map
 put(21, 4, 'M');               // apartment (grants flat docs)
 put(33, 11, 'G');              // Bürgeramt (goal)
@@ -49,7 +50,7 @@ let start = null;
 for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) {
   const ch = g[r][c];
   if (ch === '@') start = { c, r };
-  if (ch === 'T' || ch === 'P' || ch === 'R') blocked.add(`${c},${r}`);
+  if (ch === 'T' || ch === 'P' || ch === 'R' || ch === 'Q') blocked.add(`${c},${r}`);
   if (BUILD.has(ch)) for (let o = -2; o <= 2; o++) blocked.add(`${c + o},${r}`);
 }
 const seen = new Set([`${start.c},${start.r}`]);

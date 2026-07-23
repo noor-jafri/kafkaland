@@ -5,8 +5,9 @@ import { INTRO_PANELS, HOWTO, FACT_CARDS } from './content.js';
 // plus in-game overlays (dialogue, fact cards, codex) and the win screen.
 // main.js freezes the world whenever `blocking()` is true.
 export class Screens {
-  constructor({ onStart }) {
+  constructor({ onStart, onAudioEvent }) {
     this.onStart = onStart;
+    this.onAudioEvent = onAudioEvent;
     this.phase = 'title'; // title | intro | howto | credits | playing | won
     this.overlay = null; // null | 'dialogue' | 'factcard' | 'codex'
 
@@ -62,12 +63,14 @@ export class Screens {
   startDialogue(speaker, lines, onDone) {
     this.dialogue = { speaker, lines, index: 0, onDone };
     this.overlay = 'dialogue';
+    this.onAudioEvent?.('dialogue-open');
     this.#renderDialogue();
   }
 
   // win: the current level's { title, sub, body, nextLabel, hasNext } metadata.
   // onContinue: called when the player confirms and hasNext is true.
   showWon(items, win, onContinue) {
+    this.onAudioEvent?.('completion');
     this.phase = 'won';
     this.overlay = null;
     this.onWonContinue = win.hasNext ? onContinue : null;
@@ -117,13 +120,23 @@ export class Screens {
     // Full-screen phases.
     if (this.phase === 'title') this.#updateTitle(up, down, confirm);
     else if (this.phase === 'intro') {
-      if (confirm) this.#advanceIntro();
+      if (confirm) {
+        this.onAudioEvent?.('ui-confirm', { gain: 0.42 });
+        this.#advanceIntro();
+      }
     } else if (this.phase === 'howto') {
-      if (confirm) this.#beginPlaying();
+      if (confirm) {
+        this.onAudioEvent?.('ui-confirm', { gain: 0.48 });
+        this.#beginPlaying();
+      }
     } else if (this.phase === 'credits') {
-      if (confirm || esc) this.#renderTitle();
+      if (confirm || esc) {
+        this.onAudioEvent?.('ui-back', { gain: 0.42 });
+        this.#renderTitle();
+      }
     } else if (this.phase === 'levelintro') {
       if (confirm) {
+        this.onAudioEvent?.('ui-confirm', { gain: 0.48 });
         const begin = this.onIntroBegin;
         this.onIntroBegin = null;
         this.phase = 'playing';
@@ -185,12 +198,15 @@ export class Screens {
     const items = this.#titleItems();
     if (up) {
       this.menuIndex = (this.menuIndex - 1 + items.length) % items.length;
+      this.onAudioEvent?.('ui-select', { gain: 0.42 });
       this.#drawTitleMenu();
     } else if (down) {
       this.menuIndex = (this.menuIndex + 1) % items.length;
+      this.onAudioEvent?.('ui-select', { gain: 0.42 });
       this.#drawTitleMenu();
     } else if (confirm) {
       const it = items[this.menuIndex];
+      this.onAudioEvent?.(it.disabled ? 'locked-feedback' : 'ui-confirm', { gain: 0.48 });
       if (!it.disabled) it.action();
     }
   }
@@ -277,11 +293,13 @@ export class Screens {
     if (d.index >= d.lines.length) {
       this.dlgEl.classList.add('hidden');
       this.overlay = null;
+      this.onAudioEvent?.('dialogue-close');
       const cb = d.onDone;
       this.dialogue = null;
       cb?.();
       this.#pump();
     } else {
+      this.onAudioEvent?.('dialogue-line');
       this.#renderDialogue();
     }
   }
@@ -296,10 +314,12 @@ export class Screens {
     const fc = FACT_CARDS[id];
     this.card = id;
     this.overlay = 'factcard';
-    if (!this.codexSet.has(id)) {
+    const firstTime = !this.codexSet.has(id);
+    if (firstTime) {
       this.codexSet.add(id);
       this.codexSeen.push(id);
     }
+    this.onAudioEvent?.('fact-open', { firstTime });
     this.cardEl.querySelector('.fc-title').textContent = fc.title;
     this.cardEl.querySelector('.fc-body').textContent = fc.body;
     this.cardEl.classList.remove('hidden');
@@ -307,6 +327,7 @@ export class Screens {
   #closeCard() {
     this.cardEl.classList.add('hidden');
     this.overlay = null;
+    this.onAudioEvent?.('fact-close');
     this.card = null;
     this.#pump();
   }
@@ -314,6 +335,7 @@ export class Screens {
   // ---- Codex ----
   #openCodex() {
     this.overlay = 'codex';
+    this.onAudioEvent?.('ui-open', { gain: 0.5 });
     const list = this.codexSeen
       .map((id) => `<div class="cx-entry"><div class="cx-t">${FACT_CARDS[id].title}</div><div class="cx-b">${FACT_CARDS[id].body}</div></div>`)
       .join('') || '<div class="cx-empty">Nothing yet. Go collect some documents.</div>';
@@ -325,6 +347,7 @@ export class Screens {
   #closeCodex() {
     this.codexEl.classList.add('hidden');
     this.overlay = null;
+    this.onAudioEvent?.('ui-close', { gain: 0.45 });
     if (this.phase === 'title') this.#renderTitle();
   }
 

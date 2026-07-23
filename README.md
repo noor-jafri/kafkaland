@@ -4,6 +4,10 @@ A step-by-step wiki covering everything a person goes through when relocating to
 
 > **Last researched: 2026-07-23.** German bureaucracy (fees, thresholds, appointment systems, office locations) changes frequently and unevenly across sources. Every page flags uncertain or fast-changing figures with "verify current figures" — do that before relying on anything time- or money-sensitive. Sources are linked at the bottom of each page.
 
+## Run the game and companion
+
+The playable game uses Vite and the in-world Marlene companion uses a separate Node API. Run `npm run dev:all` to start both, or keep using `npm run dev` for the original game-only workflow. Model configuration, direct Markdown retrieval, progression security, letter privacy, production boundaries, and test instructions are documented in [docs/companion.md](docs/companion.md). The original procedural score, settings, provenance, and sound desk at `/src/audio/audition.html` are documented in [docs/audio.md](docs/audio.md).
+
 The wiki is structured like a **game world**: a gated **Main Quest Line** you clear in order, and a **Side Quest hub** of ongoing-life topics that unlock once you clear the key gate (Anmeldung) and can be tackled in whatever order suits you. Every page carries a `Sequence` / `Prerequisites` / `Unlocks` block and a `← Previous | Next →` footer, so the whole thing is click-through navigable end to end — and structured enough to be lifted directly into level design for that game later.
 
 ## Why this order

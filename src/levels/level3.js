@@ -5,7 +5,7 @@
 //   .  grass   T/P trees (punchable)   R rock
 //   @  start   1  Fiktionsbescheinigung (hidden bridging doc)
 //   A  Ausländerbehörde (eAT)   V  Integrationskurs   Z  Recognition (optional)
-//   J  Employer (goal)
+//   J  Employer (goal)   Q  Marlene companion kiosk
 //   s  slime   b  bat   c  conflicting-information official   U  Untätigkeit boss
 export const MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -17,7 +17,7 @@ export const MAP = [
   'T.......T.P......s.....P......bT.......T',
   'T.............A........P...............T',
   'T.............b..................TTTTT.T',
-  'T.@......s..................U..........T',
+  'T.@.Q....s..................U..........T',
   'T..................T..b................T',
   'T.PPPPP.....P......T.......T........J..T',
   'T...........P......T.......T.....b.....T',
@@ -85,6 +85,10 @@ export const BUILDINGS = {
 // Deliver these to the Employer to clear the level (recognition is optional).
 export const REQUIRED = ['eat_card', 'berechtigungsschein'];
 
+export const COMPANIONS = {
+  Q: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
+};
+
 export const LEVEL3 = {
   id: 3,
   name: 'LEVEL 3',
@@ -92,6 +96,7 @@ export const LEVEL3 = {
   documents: DOCUMENTS,
   granted: GRANTED,
   buildings: BUILDINGS,
+  companions: COMPANIONS,
   required: REQUIRED,
   passportItem: 'fiktionsbescheinigung',
   mission: {

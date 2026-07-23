@@ -3,7 +3,7 @@
 //
 //   .  grass   #  dirt   T/P trees (punchable)   R rock
 //   @  start   1  Kontoantrag (hidden)   2  Passfoto (optional, hidden)
-//   B  Bank    K  Krankenkasse   F  Finanzamt (goal)
+//   B  Bank    K  Krankenkasse   F  Finanzamt (goal)   Q  Marlene
 //   s  slime   b  bat ("Processing Delay")
 export const MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -15,7 +15,7 @@ export const MAP = [
   'T.........PPPPPP........TTTTTT.........T',
   'T......................................T',
   'T.........................b......R.....T',
-  'T.@.....P....s...T.K...................T',
+  'T.@.Q...P....s...T.K...................T',
   'T......................................T',
   'T......................................T',
   'T...........TTTTTT.....PPPPPP..........T',
@@ -73,6 +73,10 @@ export const BUILDINGS = {
 // Delivered at the Finanzamt to clear the level.
 export const REQUIRED = ['iban', 'versichertenkarte'];
 
+export const COMPANIONS = {
+  Q: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
+};
+
 export const LEVEL2 = {
   id: 2,
   name: 'LEVEL 2',
@@ -80,6 +84,7 @@ export const LEVEL2 = {
   documents: DOCUMENTS,
   granted: GRANTED,
   buildings: BUILDINGS,
+  companions: COMPANIONS,
   required: REQUIRED,
   mission: {
     tag: 'LEVEL 2 · MONEY, HEALTH, TAXES',

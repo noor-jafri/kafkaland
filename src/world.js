@@ -14,6 +14,7 @@ export function buildWorld(scene, textures, level) {
   const MAP = level.map;
   const DOCUMENTS = level.documents;
   const BUILDINGS = level.buildings;
+  const COMPANIONS = level.companions || {};
   const rows = MAP.length;
   const cols = MAP[0].length;
   const width = cols * TILE;
@@ -99,6 +100,12 @@ export function buildWorld(scene, textures, level) {
           root.add(banner);
         }
         npcs.push({ ...BUILDINGS[ch], x: worldX, y: worldY, mesh });
+      } else if (COMPANIONS[ch]) {
+        const mesh = makeCompanionMesh();
+        mesh.position.set(worldX, tileBottom + 15, depthForY(tileBottom));
+        root.add(mesh);
+        blocked.add(`${c},${r}`);
+        npcs.push({ ...COMPANIONS[ch], x: worldX, y: worldY, mesh });
       } else if (ch === 's') {
         enemySpawns.slime.push({ x: worldX, y: worldY });
       } else if (ch === 'b') {
@@ -124,7 +131,7 @@ export function buildWorld(scene, textures, level) {
     }
   }
 
-  return { width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root };
+  return { map: MAP, width, height, rows, cols, blocked, items, npcs, trees, enemySpawns, trail, playerStart, root };
 }
 
 // A crisp parchment name banner for a building, drawn on a canvas. Rendered at
@@ -212,6 +219,57 @@ function makeDocumentMesh() {
     new THREE.MeshBasicMaterial({ map: tex, transparent: true })
   );
   return mesh;
+}
+
+// Marlene's records kiosk uses hard-edged pixels that match the existing world.
+function makeCompanionMesh() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 24;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  ctx.fillStyle = '#2c473b';
+  ctx.fillRect(2, 18, 20, 12);
+  ctx.fillStyle = '#d7ad4f';
+  ctx.fillRect(2, 18, 20, 2);
+  ctx.fillRect(4, 28, 3, 3);
+  ctx.fillRect(17, 28, 3, 3);
+  ctx.fillStyle = '#493126';
+  ctx.fillRect(5, 8, 14, 11);
+  ctx.fillStyle = '#a76540';
+  ctx.fillRect(7, 7, 10, 10);
+  ctx.fillStyle = '#f3e4b3';
+  ctx.fillRect(7, 9, 4, 4);
+  ctx.fillRect(13, 9, 4, 4);
+  ctx.fillStyle = '#25231f';
+  ctx.fillRect(9, 10, 2, 2);
+  ctx.fillRect(13, 10, 2, 2);
+  ctx.fillStyle = '#e1a83f';
+  ctx.fillRect(11, 13, 3, 2);
+  ctx.fillStyle = '#f1e5bd';
+  ctx.fillRect(16, 1, 7, 8);
+  ctx.fillStyle = '#9f3e35';
+  ctx.fillRect(18, 2, 3, 1);
+  ctx.fillRect(20, 3, 1, 2);
+  ctx.fillRect(19, 5, 1, 2);
+  ctx.fillRect(19, 8, 1, 1);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 32),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+  );
+  mesh.userData.companionNpc = true;
+  return mesh;
+}
+
+export function surfaceAt(world, x, y) {
+  const column = Math.max(0, Math.min(world.cols - 1, Math.floor(x / TILE)));
+  const row = Math.max(0, Math.min(world.rows - 1, Math.floor((world.height - y) / TILE)));
+  return world.map[row]?.[column] === '#' ? 'path' : 'grass';
 }
 
 // AABB collision against blocked tiles. Returns true if the box hits a wall.

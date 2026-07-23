@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import { CAMERA_ZOOM, INTERACT_RADIUS, FRUSTRATION, FRUSTRATION_PROMPTS, DAY_TIMER, NAG, TRAIL } from './config.js';
 import { loadAll } from './textures.js';
-import { buildWorld } from './world.js';
+import { buildWorld, surfaceAt } from './world.js';
 import { Player } from './player.js';
 import { HUD } from './ui.js';
 import { Screens } from './screens.js';
+import { CompanionPanel } from './companion.js';
+import { GameAudio } from './audio/game-audio.js';
+import { AudioSettingsPanel } from './audio/settings.js';
 import { buildEnemies } from './enemies.js';
 import { Nag } from './nag.js';
 import { wasPressed, endFrame } from './input.js';
@@ -21,6 +24,8 @@ async function start() {
   const renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.domElement.tabIndex = 0;
+  renderer.domElement.setAttribute('aria-label', 'Kafkaland game world. Use WASD or arrow keys to move.');
   app.prepend(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -41,10 +46,18 @@ async function start() {
   resize();
   window.addEventListener('resize', resize);
 
+  const gameAudio = new GameAudio();
+  gameAudio.installGestureUnlock();
+  const audioSettings = new AudioSettingsPanel(gameAudio);
+
   const textures = await loadAll();
   const hud = new HUD();
+  const companion = new CompanionPanel({ onAudioEvent: (name, detail) => gameAudio.emit(name, detail) });
   const nag = new Nag(scene);
-  nag.onSpawn = () => hud.toast('📮 ' + NAG_LINES.spawn);
+  nag.onSpawn = () => {
+    gameAudio.emit('mail-delivery');
+    hud.toast('📮 ' + NAG_LINES.spawn);
+  };
   nag.onLeave = (m) => hud.toast('📮 ' + m);
 
   // --- Per-run objects & state, (re)built each level ---
@@ -86,7 +99,7 @@ async function start() {
     camera.position.x = player.pos.x;
     camera.position.y = player.pos.y;
     hud.setChecklist(level.checklist);
-    window.__game = { level, player, camera, world, screens }; // debug handle
+    window.__game = { level, player, camera, world, screens, companion, audio: gameAudio, audioSettings }; // debug handle
   }
 
   function refreshChecklist() {
@@ -103,11 +116,20 @@ async function start() {
   }
 
   const screens = new Screens({
+    onAudioEvent: (name, detail) => gameAudio.emit(name, detail),
     onStart: () => {
       started = true;
+      gameAudio.startGame();
+      gameAudio.setDeadlineProgress(1, DAY_TIMER.deadlineDay);
+      companion.prepare();
       screens.showLevelIntro(level.mission, announceLevel);
     },
   });
+
+  window.addEventListener('beforeunload', () => {
+    audioSettings.dispose();
+    gameAudio.dispose();
+  }, { once: true });
 
   loadLevel(1); // build a world to render behind the title screen
 
@@ -129,6 +151,7 @@ async function start() {
   function collect(item) {
     item.collected = true;
     item.mesh.removeFromParent();
+    gameAudio.emit('document-pickup');
     hud.addItem(item);
     refreshChecklist();
     if (item.fact) screens.queueFact(item.fact);
@@ -140,6 +163,7 @@ async function start() {
 
   function addFrustration(amount) {
     frustration = Math.min(FRUSTRATION.max, frustration + amount);
+    gameAudio.emit('frustration-increase');
     const frac = frustration / FRUSTRATION.max;
     while (frustPromptIdx < FRUSTRATION_PROMPTS.length && frac >= FRUSTRATION_PROMPTS[frustPromptIdx]) {
       frustPromptIdx++;
@@ -148,8 +172,13 @@ async function start() {
   }
 
   function interactNpc(npc) {
+    if (npc.id === 'companion') {
+      companion.open();
+      return;
+    }
     // Untätigkeit mini-boss: endure escalating forms; eventually it gives up.
     if (npc.boss) {
+      gameAudio.emit('building-enter');
       npc._step = npc._step || 0;
       if (npc._step < UNTAETIGKEIT.steps.length) {
         screens.startDialogue(UNTAETIGKEIT.speaker, [UNTAETIGKEIT.steps[npc._step]]);
@@ -165,15 +194,21 @@ async function start() {
     }
     if (npc.goal) {
       const hasAll = level.required.every((id) => hud.hasItem(id));
+      gameAudio.emit('building-enter');
       if (hasAll) {
         const d = DIALOGUES[npc.completeDialogue];
         screens.startDialogue(d.speaker, d.lines, () => {
+          gameAudio.emit('rubber-stamp');
           grantItems(d.grants);
           registered = true;
+          if (level.id === 1) companion.recordProgress('complete_level_1');
+          if (level.id === 2) companion.recordProgress('complete_level_2');
           pendingWin = true; // win screen shows once the last fact card is dismissed
           hud.setObjective(`✅ ${level.name} complete!`);
         });
       } else {
+        gameAudio.emit('missing-document');
+        gameAudio.emit('quest-failure', { gain: 0.55 });
         const d = DIALOGUES[npc.incompleteDialogue];
         const missing = level.required.filter((id) => !hud.hasItem(id)).map(itemName);
         const lines = [...d.lines, `You are still missing: ${missing.join(', ')}. No documents, no service. Come back when you're complete.`];
@@ -183,6 +218,7 @@ async function start() {
     }
     // Hard gate: refuse until the player holds every required item.
     if (npc.requires && !npc.requires.every((id) => hud.hasItem(id))) {
+      gameAudio.emit('missing-document');
       const g = DIALOGUES[npc.gateDialogue];
       screens.startDialogue(g.speaker, g.lines);
       return;
@@ -191,11 +227,13 @@ async function start() {
       hud.toast(npc.claimedToast);
       return;
     }
+    gameAudio.emit('building-enter');
     const d = DIALOGUES[npc.dialogue];
     const onDone = d.grants
       ? () => {
           if (npc.claimOnce) claimed.add(npc.id);
           grantItems(d.grants);
+          if (level.id === 1 && npc.id === 'apartment') companion.recordProgress('complete_housing');
           if (npc.nextObjective) hud.setObjective(npc.nextObjective);
         }
       : undefined;
@@ -240,8 +278,8 @@ async function start() {
 
     // Screens own input while any overlay/menu is up. Capture that BEFORE updating
     // them, so the frame an overlay closes doesn't also trigger a world action.
-    const wasBlocking = screens.blocking();
-    screens.update();
+    const wasBlocking = screens.blocking() || companion.isOpen() || audioSettings.isOpen();
+    if (!companion.isOpen() && !audioSettings.isOpen()) screens.update();
 
     // Show the win screen once the final fact card is dismissed.
     if (pendingWin && !screens.blocking()) {
@@ -280,6 +318,7 @@ async function start() {
       if (day !== curDay) {
         curDay = day;
         hud.setDay(curDay, DAY_TIMER.deadlineDay);
+        gameAudio.setDeadlineProgress(curDay, DAY_TIMER.deadlineDay);
         // Holding a Fiktionsbescheinigung suspends the deadline pressure (its
         // whole real-world purpose — it keeps your stay legal while you wait).
         if (curDay > DAY_TIMER.deadlineDay && !lateWarned && !hud.hasItem('fiktionsbescheinigung')) {
@@ -311,6 +350,7 @@ async function start() {
         }
         if (hitCooldown === 0 && d < e.contactRadius) {
           hitCooldown = FRUSTRATION.hitCooldown;
+          gameAudio.emit('slime-collision');
           addFrustration(FRUSTRATION.perSlimeHit);
           hud.toast(e.kind === 'bat'
             ? '🦇 Processing delay! Your file drops to the bottom of the pile. (+frustration)'
@@ -339,6 +379,7 @@ async function start() {
       const tree = nearestTree();
       if (tree && wasPressed('KeyF') && !player.punching) {
         player.vent();
+        gameAudio.emit('tree-vent');
         frustration = Math.max(0, frustration - FRUSTRATION.ventDrain);
         hud.setFrustration(frustration, FRUSTRATION.max);
         hud.toast(VENT_LINES[Math.floor(Math.random() * VENT_LINES.length)]);
@@ -370,6 +411,7 @@ async function start() {
 
       if (wasPressed('KeyE')) {
         if (nag.isNear(player)) {
+          gameAudio.emit('paper-rustle');
           nag.despawn(NAG_LINES.paid);
           screens.queueFact('rundfunk');
         } else {
@@ -381,6 +423,16 @@ async function start() {
     } else {
       hud.showPrompt(null);
     }
+
+    gameAudio.update(dt, {
+      active: started && !frozen && !registered,
+      moving: player.moving,
+      surface: surfaceAt(world, player.pos.x, player.pos.y),
+      slimeNearby: enemies.some((enemy) => enemy.kind === 'slime' && Math.hypot(
+        enemy.pos.x - player.pos.x,
+        enemy.pos.y - player.pos.y
+      ) < 120),
+    });
 
     renderer.render(scene, camera);
     endFrame();

@@ -7,7 +7,7 @@
 //   @  player start (train platform)
 //   1  passport pickup (hidden)   2  SIM pickup (optional, hidden)
 //   H  hostel (flavor)   M  apartment (grants flat docs)   G  Bürgeramt (goal)
-//   s  slime spawn (bureaucratic friction)
+//   Q  Marlene companion kiosk   s  slime spawn (bureaucratic friction)
 //
 // The map is a winding little town: the direct line from the platform to the
 // offices is blocked, and the passport is tucked in a dead-end pocket so you
@@ -22,7 +22,7 @@ export const MAP = [
   'T.TTT............T............PT.......T',
   'T.T1..............P...........P........T',
   'T......................................T',
-  'T.@...........s...............H..R.....T',
+  'T.@.Q.........s...............H..R.....T',
   'T......................................T',
   'T.......T.......M.................G....T',
   'T........P.............................T',
@@ -78,6 +78,10 @@ export const BUILDINGS = {
 // Documents required (delivered at the goal) to clear the level.
 export const REQUIRED = ['passport', 'mietvertrag', 'wohnungsgeberbestaetigung'];
 
+export const COMPANIONS = {
+  Q: { id: 'companion', name: 'Marlene, Amts-Eule', prompt: 'Ask Marlene, the Amts-Eule' },
+};
+
 export const LEVEL1 = {
   id: 1,
   name: 'LEVEL 1',
@@ -85,6 +89,7 @@ export const LEVEL1 = {
   documents: DOCUMENTS,
   granted: GRANTED,
   buildings: BUILDINGS,
+  companions: COMPANIONS,
   required: REQUIRED,
   mission: {
     tag: 'LEVEL 1 · ARRIVE',

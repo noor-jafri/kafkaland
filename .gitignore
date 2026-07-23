@@ -1,3 +1,4 @@
 node_modules/
 dist/
+.companion-*
 .DS_Store
