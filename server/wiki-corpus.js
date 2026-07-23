@@ -118,7 +118,6 @@ export async function loadWikiCorpus({ wikiDirectory = path.resolve('wiki') } = 
         headingDepth: section.depth,
         language: 'en',
         minLevel: access.minLevel,
-        requiredFlags: [...access.requiredFlags],
         standingReference: Boolean(access.standingReference),
         text: section.body,
         titleTokens: tokenize(pageTitle),
@@ -189,7 +188,7 @@ function applyIntentBoost(results, query, originalTokens) {
 
 export function detectLocale(value) {
   const text = ` ${String(value).toLocaleLowerCase('de-DE')} `;
-  const germanSignals = [' der ', ' die ', ' das ', ' und ', ' ich ', ' muss ', ' brauche ', ' bitte ', ' was ', ' wie ', ' wann ', ' anmeldung', 'frist'];
+  const germanSignals = [' der ', ' die ', ' das ', ' und ', ' ich ', ' muss ', ' brauche ', ' bitte ', ' was ', ' wie ', ' wann ', ' anmeldung', 'frist', ' dringend', ' gefahr'];
   return germanSignals.filter((signal) => text.includes(signal)).length >= 2 ? 'de' : 'en';
 }
 
@@ -201,7 +200,6 @@ export function retrieveWiki(corpus, query, progress, { limit = 4, locale = dete
   for (const section of corpus) {
     const metadata = {
       minLevel: section.minLevel,
-      requiredFlags: section.requiredFlags,
       standingReference: section.standingReference,
     };
     (isPageUnlocked(metadata, progress) ? allowed : locked).push(section);
@@ -242,7 +240,6 @@ export function retrieveWiki(corpus, query, progress, { limit = 4, locale = dete
       heading: section.heading,
       language: section.language,
       minLevel: section.minLevel,
-      requiredFlags: [...section.requiredFlags],
       text: section.text,
       score,
     })),

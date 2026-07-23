@@ -149,7 +149,7 @@ export class CompanionPanel {
 
   #showProgress(progress) {
     if (!progress) return;
-    this.level.textContent = `LEVEL ${progress.currentLevel} FILES`;
+    this.level.textContent = `LEVEL ${progress.currentLevel} SCOPE`;
   }
 
   async #post(path, body, signal) {
@@ -189,7 +189,7 @@ export class CompanionPanel {
     this.input.setAttribute('aria-describedby', letter ? 'letter-warning companion-mode-hint' : 'companion-mode-hint');
     this.modeHint.textContent = letter
       ? 'Text only. Images and PDFs are not read. Ctrl/⌘ + Enter to explain.'
-      : 'Answers use only your unlocked files. Ctrl/⌘ + Enter to send.';
+      : 'Ask about anything in your current or earlier levels. Future guidance unlocks as you progress. Ctrl/⌘ + Enter to send.';
     this.submit.querySelector('.submit-label').textContent = letter ? 'Explain letter' : 'Ask Marlene';
     this.input.value = '';
     this.#updateCount();
@@ -275,10 +275,10 @@ export class CompanionPanel {
   #appendLoading(mode) {
     const article = element('article', 'companion-message companion-message-assistant companion-loading');
     article.setAttribute('role', 'status');
-    article.setAttribute('aria-label', 'Marlene is checking unlocked files');
+    article.setAttribute('aria-label', 'Marlene is checking current-level guidance');
     const dots = element('div', 'loading-dots');
     for (let i = 0; i < 3; i++) dots.append(element('span'));
-    article.append(element('div', 'message-kicker', 'MARLENE CHECKS THE FILES'), dots, element('p', 'loading-copy', mode === 'letter' ? 'Reading this once. Kafkaland does not save it.' : 'Searching only what you have unlocked.'));
+    article.append(element('div', 'message-kicker', 'MARLENE CHECKS THE FILES'), dots, element('p', 'loading-copy', mode === 'letter' ? 'Reading this once. Kafkaland does not save it.' : 'Checking guidance for your current level.'));
     this.messages.append(article);
     this.#scrollMessages();
     return article;
@@ -290,11 +290,14 @@ export class CompanionPanel {
     article.append(element('div', 'message-kicker', payload.type === 'locked' ? 'SEALED FILE' : 'MARLENE · AMTS-EULE'));
     article.append(element('p', 'answer-copy', payload.answer));
 
+    if (payload.generalGuidance) {
+      article.append(element('div', 'guidance-basis', 'Includes clearly labelled general guidance where the Kafkaland wiki is incomplete.'));
+    }
     if (payload.type === 'letter') {
-      article.append(this.#warning(payload.warning));
       article.append(this.#itemList('Explicit deadlines', payload.deadlines, 'No explicit deadline found in the pasted text.'));
       article.append(this.#itemList('Requested actions', payload.actions, 'No explicit requested action found in the pasted text.'));
     }
+    if (payload.warning) article.append(this.#warning(payload.warning));
     if (payload.citations?.length) article.append(this.#citations(payload.citations));
     this.messages.append(article);
     this.#scrollMessages();
@@ -326,7 +329,7 @@ export class CompanionPanel {
 
   #citations(citations) {
     const section = element('section', 'companion-citations');
-    section.append(element('h4', '', 'Unlocked sources'));
+    section.append(element('h4', '', 'Current-level wiki sources'));
     const list = element('ol');
     for (const citation of citations) {
       const item = element('li');

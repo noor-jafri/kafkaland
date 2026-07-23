@@ -11,7 +11,6 @@ for (const section of corpus) {
     heading: section.heading,
     language: section.language,
     minLevel: section.minLevel,
-    requiredFlags: section.requiredFlags,
     text: section.text,
   }));
   digest.update('\n');

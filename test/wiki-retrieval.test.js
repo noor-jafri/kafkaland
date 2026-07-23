@@ -20,7 +20,7 @@ test('tracked Markdown is split deterministically with complete progression meta
     assert.ok(section.heading);
     assert.equal(section.language, 'en');
     assert.ok(Number.isInteger(section.minLevel));
-    assert.ok(Array.isArray(section.requiredFlags));
+    assert.equal('requiredFlags' in section, false);
     assert.ok(section.text.length > 0);
   }
 });
